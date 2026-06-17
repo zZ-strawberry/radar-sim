@@ -1,0 +1,5 @@
+path: /home/yy/radar/radar-sim/dataset_shortcam_item
+train: images
+val: images
+names:
+  0: item

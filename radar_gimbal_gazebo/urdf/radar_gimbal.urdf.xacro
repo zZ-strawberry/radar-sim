@@ -1,0 +1,374 @@
+<?xml version="1.0"?>
+<!--
+  仿真主模型。几何与惯量与 雷达.SLDASM/urdf/雷达.SLDASM.urdf 一致。
+  macro 内 mesh 写为 package://radar_gimbal_gazebo/meshes/*.STL；
+  sim.launch.py 在加载前会替换为绝对 file://，供 Gazebo 正确显示 STL。
+  相对 SW 原文件：光学关节 fixed；pich_joint -> pitch_joint；补全 limit/dynamics。
+-->
+<robot name="radar_gimbal" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- 相对 base_footprint 的装配平移。此前 z=3 会使 SDF 把底座+固定相机 lump 到 base_footprint 后质心约在 z≈3，选中时出现「细长盒子插到地下」的包围盒假象，并恶化数值问题。需要抬高整机请改 sim.launch.py 的 spawn -z。 -->
+  <xacro:property name="base_footprint_xyz" value="0 0 0"/>
+  <xacro:property name="base_footprint_rpy" value="0 0 0"/>
+
+  <!-- 电机参数（按你提供的驱动实测页面）： -->
+  <!-- CAN ID 0x01 = pitch（减速比 25，极对数 7） -->
+  <!-- CAN ID 0x02 = 云台电机/roll（减速比 1，极对数 14） -->
+  <!-- 控制阈值按实机当前配置：PMAX=pi, VMAX=30rad/s, TMAX=10Nm -->
+  <xacro:property name="pitch_cmd_vmax_rad_s" value="30.0"/>
+  <xacro:property name="pitch_cmd_tmax_nm" value="10.0"/>
+  <xacro:property name="roll_cmd_vmax_rad_s" value="30.0"/>
+  <xacro:property name="roll_cmd_tmax_nm" value="10.0"/>
+  <!-- 粘滞系数按驱动读值回填 -->
+  <xacro:property name="pitch_damping_measured" value="5.33834e-06"/>
+  <xacro:property name="roll_damping_measured" value="0.00326047"/>
+
+  <!-- 相机参数（按当前实物配置） -->
+  <!-- 长焦：MV-CS016-10UC + 50mm F2.8（1/1.8" 靶面，水平尺寸约 7.2mm） -->
+  <xacro:property name="tele_hfov_rad" value="${2.0 * atan(7.2 / (2.0 * 50.0))}"/>
+  <!-- 短焦：MV-CS060-10UC-PRO + 5-12mm 变焦镜头，仿真默认用中段 8mm -->
+  <xacro:property name="wide_hfov_rad" value="${2.0 * atan(7.2 / (2.0 * 8.0))}"/>
+
+  <xacro:macro name="radar_solidworks_model">
+    <link name="base_footprint">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="1e-6"/>
+        <inertia ixx="1e-9" ixy="0" ixz="0" iyy="1e-9" iyz="0" izz="1e-9"/>
+      </inertial>
+    </link>
+
+    <joint name="base_footprint_joint" type="fixed">
+      <origin xyz="${base_footprint_xyz}" rpy="${base_footprint_rpy}"/>
+      <parent link="base_footprint"/>
+      <child link="base_link"/>
+    </joint>
+
+    <link name="base_link">
+      <inertial>
+        <origin xyz="0.00106427671530626 -0.00322922392982693 -0.00671468562919772" rpy="0 0 0"/>
+        <mass value="0.229931745877165"/>
+        <inertia ixx="0.000590270936390006" ixy="1.07371769131118E-05" ixz="1.88719478321106E-06"
+                 iyy="0.000126898863823102" iyz="-6.79511189117362E-06" izz="0.000709505066157741"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/base_link.STL"/>
+        </geometry>
+        <material name="m_base">
+          <color rgba="0.968627450980392 0.968627450980392 0.968627450980392 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/base_link.STL"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="fix_camera_one_Link">
+      <inertial>
+        <origin xyz="-0.0292931154612421 -2.92415076856394E-05 -0.00534378407408276" rpy="0 0 0"/>
+        <mass value="0.0432395885563312"/>
+        <inertia ixx="6.84812974536652E-06" ixy="-2.42904999940939E-08" ixz="1.92184336275892E-08"
+                 iyy="8.06433263966491E-06" iyz="1.10833354996719E-09" izz="1.1016716291214E-05"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/fix_camera_one_Link.STL"/>
+        </geometry>
+        <material name="m_cam_housing">
+          <color rgba="1 1 1 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/fix_camera_one_Link.STL"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="fix_camera_one" type="fixed">
+      <origin xyz="0.030847222837753 0.0638829730233286 0.0175" rpy="0 0 0"/>
+      <parent link="base_link"/>
+      <child link="fix_camera_one_Link"/>
+    </joint>
+
+    <link name="camera_one_optical_Link">
+      <inertial>
+        <origin xyz="-4.92273352582437E-06 2.90905862816056E-05 0.0167250240812808" rpy="0 0 0"/>
+        <mass value="0.0332391621102825"/>
+        <inertia ixx="7.23769741063542E-06" ixy="3.06745951726435E-09" ixz="1.31194570343541E-10"
+                 iyy="7.22008946786781E-06" iyz="-7.75285076070035E-10" izz="4.04870875276839E-06"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/camera_one_optical_Link.STL"/>
+        </geometry>
+        <material name="m_optical_one">
+          <color rgba="1 1 1 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/camera_one_optical_Link.STL"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="camera_one_optical" type="fixed">
+      <origin xyz="0.0335268385635114 0 0" rpy="-1.5707963267949 0 1.5707963267949"/>
+      <parent link="fix_camera_one_Link"/>
+      <child link="camera_one_optical_Link"/>
+    </joint>
+
+    <link name="yaw_joint_Link">
+      <inertial>
+        <origin xyz="-0.000116508010712883 -0.00539983150200984 -0.0113972516576247" rpy="0 0 0"/>
+        <mass value="0.683416690081258"/>
+        <inertia ixx="0.000322059590126863" ixy="-1.77290607885917E-06" ixz="-1.18416365927975E-06"
+                 iyy="0.000338934850311297" iyz="1.9429950603338E-05" izz="0.000442690001311827"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/yaw_joint_Link.STL"/>
+        </geometry>
+        <material name="m_yaw">
+          <color rgba="1 0.949019607843137 0.898039215686275 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/yaw_joint_Link.STL"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="yaw_joint" type="revolute">
+      <origin xyz="0 -0.047117 0.0405" rpy="0 0 0"/>
+      <parent link="base_link"/>
+      <child link="yaw_joint_Link"/>
+      <axis xyz="0 0 1"/>
+      <!-- roll 轴（CAN ID 0x02）：按实测驱动控制阈值与粘滞系数 -->
+      <limit lower="-3.14159" upper="3.14159" effort="${roll_cmd_tmax_nm}" velocity="${roll_cmd_vmax_rad_s}"/>
+      <dynamics damping="${roll_damping_measured}" friction="0.02"/>
+    </joint>
+
+    <link name="pich_joint_Link">
+      <inertial>
+        <origin xyz="0.000138467596281736 0.00144707841660707 0.00776665263018918" rpy="0 0 0"/>
+        <mass value="0.0121756572772907"/>
+        <inertia ixx="1.50898942787321E-06" ixy="-9.08706173162835E-10" ixz="-5.55374973288002E-09"
+                 iyy="3.11525960305741E-06" iyz="3.88141718579356E-08" izz="2.57913481745752E-06"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/pich_joint_Link.STL"/>
+        </geometry>
+        <material name="m_pitch">
+          <color rgba="0.968627450980392 0.968627450980392 0.968627450980392 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/pich_joint_Link.STL"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="pitch_joint" type="revolute">
+      <origin xyz="0 -0.003 0.031" rpy="0 0 0"/>
+      <parent link="yaw_joint_Link"/>
+      <child link="pich_joint_Link"/>
+      <axis xyz="0 -1 0"/>
+      <!-- pitch 轴（CAN ID 0x01）：按实测驱动控制阈值与粘滞系数 -->
+      <limit lower="-1.2" upper="1.2" effort="${pitch_cmd_tmax_nm}" velocity="${pitch_cmd_vmax_rad_s}"/>
+      <dynamics damping="${pitch_damping_measured}" friction="0.02"/>
+    </joint>
+
+    <link name="movable_camera_tow_Link">
+      <inertial>
+        <origin xyz="-0.0284189606680574 4.39067606750332E-05 -5.40306986665517E-07" rpy="0 0 0"/>
+        <mass value="0.0287971770555077"/>
+        <inertia ixx="3.91534975477771E-06" ixy="2.42904999940923E-08" ixz="-1.92184336275884E-08"
+                 iyy="5.14110941396445E-06" iyz="1.10833354996656E-09" izz="5.18237669217594E-06"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/movable_camera_tow_Link.STL"/>
+        </geometry>
+        <material name="m_cam_tow">
+          <color rgba="1 1 1 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/movable_camera_tow_Link.STL"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="movable_camera_tow" type="fixed">
+      <origin xyz="0.03085 0.001 0.0323" rpy="0 0 0"/>
+      <parent link="pich_joint_Link"/>
+      <child link="movable_camera_tow_Link"/>
+    </joint>
+
+    <link name="camera_tow_optical_Link">
+      <inertial>
+        <origin xyz="0.000202809333383402 -0.016436035218942 0.0145886833049471" rpy="0 0 0"/>
+        <mass value="0.0672005971243301"/>
+        <inertia ixx="4.10510128858893E-05" ixy="3.4727960827953E-07" ixz="1.08829131787497E-10"
+                 iyy="1.28432056341037E-05" iyz="-1.3644917937298E-08" izz="3.78896902119391E-05"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/camera_tow_optical_Link.STL"/>
+        </geometry>
+        <material name="m_optical_tow">
+          <color rgba="1 1 1 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://radar_gimbal_gazebo/meshes/camera_tow_optical_Link.STL"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="camera_tow_optical" type="fixed">
+      <origin xyz="0.0354242123304058 0 0" rpy="-1.5707963267949 0 1.5707963267949"/>
+      <parent link="movable_camera_tow_Link"/>
+      <child link="camera_tow_optical_Link"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:radar_solidworks_model/>
+
+  <!-- 底座固定：URDF→SDF 会把 base_footprint_joint 与底座上固定相机链 lump 成单一 link「base_footprint」，gazebo 标签须写在此 link 上。
+       gz sdf 会把 kinematic/gravity 写入 SDF；仅靠 static 在部分管线中不会落到 link 上，易出现整机缓慢自转。 -->
+  <gazebo reference="base_footprint">
+    <kinematic>true</kinematic>
+    <gravity>false</gravity>
+  </gazebo>
+
+  <!-- 可动云台链关闭重力：pitch 轴在 effort 模式下受恒重力矩，易单侧吸到限位；
+       本仿真无 IMU/前馈，仅用 PID 时关闭重力是最稳的云台调试方式。 -->
+  <gazebo reference="yaw_joint_Link">
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="pich_joint_Link">
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="movable_camera_tow_Link">
+    <gravity>false</gravity>
+  </gazebo>
+
+  <gazebo reference="camera_tow_optical_Link">
+    <gravity>false</gravity>
+    <material>Gazebo/Orange</material>
+    <sensor type="camera" name="gimbal_camera_sensor">
+      <always_on>true</always_on>
+      <update_rate>30.0</update_rate>
+      <camera>
+        <!-- Gazebo +X 视线对齐 ROS +Z（pitch +90°）；像平面再逆时针 90°（roll +90°）。若变成顺时针转 90°，把 roll 改为 -π/2。 -->
+        <pose>0 0 0 1.5707963267948966 1.5707963267948966 0</pose>
+        <!-- 长焦相机：MV-CS016-10UC + 50mm -->
+        <horizontal_fov>${tele_hfov_rad}</horizontal_fov>
+        <image>
+          <!-- 1440*1080 -->
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <!-- 镜头最近对焦距离 0.25m -->
+          <near>0.25</near>
+          <far>1000.0</far>
+        </clip>
+      </camera>
+      <plugin name="gimbal_camera_controller" filename="libgazebo_ros_camera.so">
+        <ros>
+          <namespace>/</namespace>
+        </ros>
+        <camera_name>gimbal_camera</camera_name>
+        <image_topic_name>image_raw</image_topic_name>
+        <camera_info_topic_name>camera_info</camera_info_topic_name>
+        <frame_name>camera_tow_optical_Link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="camera_one_optical_Link">
+    <material>Gazebo/Black</material>
+    <sensor type="camera" name="fixed_camera_sensor">
+      <always_on>true</always_on>
+      <update_rate>30.0</update_rate>
+      <camera>
+        <!-- 同云台相机：pitch +90° + roll +90°（像平面逆时针 90°）。 -->
+        <pose>0 0 0 1.5707963267948966 1.5707963267948966 0</pose>
+        <!-- 短焦相机：MV-CS060-10UC-PRO + 5-12mm，默认 8mm -->
+        <horizontal_fov>${wide_hfov_rad}</horizontal_fov>
+        <image>
+          <!-- 3072*2048 -->
+          <width>1440</width>
+          <height>1080</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>1000.0</far>
+        </clip>
+      </camera>
+      <plugin name="fixed_camera_controller" filename="libgazebo_ros_camera.so">
+        <ros>
+          <namespace>/</namespace>
+        </ros>
+        <camera_name>fixed_camera</camera_name>
+        <image_topic_name>image_raw</image_topic_name>
+        <camera_info_topic_name>camera_info</camera_info_topic_name>
+        <frame_name>camera_one_optical_Link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- 说明：
+       - position：Gazebo 每步 SetPosition，几乎不引入力学耦合，适合验证 yaw/pitch 方向与 TF 是否正确。
+       - position_pid：用 PID 输出力矩(SetForce)，更“真实”，但需要系统性调参，否则会出现耦合、饱和与振荡。 -->
+  <ros2_control name="GazeboSystem" type="system">
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+    <joint name="yaw_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="pitch_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <gazebo>
+    <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+      <parameters>$(find radar_gimbal_gazebo)/config/ros2_controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+
+</robot>

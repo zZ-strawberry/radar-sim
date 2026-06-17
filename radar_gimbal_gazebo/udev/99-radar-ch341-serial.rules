@@ -1,0 +1,12 @@
+# 两块 CH341（1a86:7523）在本机通过 USB 口拓扑区分，与内核分配的 ttyUSB 序号无关。
+# 当前对应关系（以 udevadm attribute-walk 为准）：
+#   1-9.3  → 原 /dev/ttyUSB0 → /dev/radar_USB0
+#   1-10.3 → 原 /dev/ttyUSB1 → /dev/radar_USB1
+# 换机箱 USB 口后 KERNELS 可能变化，需重新 attribute-walk 后改本文件。
+#
+# 安装（在仓库根目录）：
+#   sudo cp radar_gimbal_gazebo/udev/99-radar-ch341-serial.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*", KERNELS=="1-9.3", SYMLINK+="radar_USB0", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*", KERNELS=="1-10.3", SYMLINK+="radar_USB1", GROUP="dialout", MODE="0660"

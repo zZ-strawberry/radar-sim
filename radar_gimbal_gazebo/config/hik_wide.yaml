@@ -1,0 +1,20 @@
+/**:
+  ros__parameters:
+    # 短焦（wide）；曝光/增益以 lasertracking_hw_params.yaml 的 hw_hik_wide_* 为准（hw_sdk 启动时覆盖）
+    # 短焦（wide）相机节点参数：用于无人机检测与重捕获辅助
+    # 仅长焦运行时勿启本节点：hw_sdk.launch.py 默认 start_wide_camera:=false；需要短焦时再改为 true
+    # 与长焦相同：可填 device_serial 子串选机；留空则仅用 device_index
+    device_serial: ""
+    device_index: 0
+    camera_name: "fixed_camera"
+    frame_id: "fixed_camera_optical_frame"
+    camera_topic: "/fixed_camera/image_raw"
+    camera_info_url: ""  # 按当前需求不使用标定文件；仅发布原始图像
+    use_sensor_data_qos: false
+    try_set_adc_bit_depth: false
+    force_continuous_acquisition: true
+    pixel_format: "BayerRG8"
+    adc_bit_depth: "Bits_8"
+    acquisition_frame_rate: 25.0
+    exposure_time: 39000
+    gain: 16.0

@@ -1,0 +1,600 @@
+{
+  "created_at": "2026-05-02T22:45:56",
+  "output_json": "E:\\trytry\\hik_dual_camera_calibration\\outputs\\stereo_short_to_long_extrinsics.json",
+  "num_pairs_total": 113,
+  "num_pairs_used": 109,
+  "image_size_short": {
+    "width": 3072,
+    "height": 2048
+  },
+  "image_size_long": {
+    "width": 1440,
+    "height": 1080
+  },
+  "solver_used": "pnp_aggregate",
+  "rms": 0.008419233664478363,
+  "baseline_mm": 62.042421141051825,
+  "pair_names_used": [
+    "pair_0001.jpg",
+    "pair_0002.jpg",
+    "pair_0003.jpg",
+    "pair_0004.jpg",
+    "pair_0005.jpg",
+    "pair_0006.jpg",
+    "pair_0007.jpg",
+    "pair_0008.jpg",
+    "pair_0009.jpg",
+    "pair_0010.jpg",
+    "pair_0011.jpg",
+    "pair_0012.jpg",
+    "pair_0013.jpg",
+    "pair_0014.jpg",
+    "pair_0015.jpg",
+    "pair_0016.jpg",
+    "pair_0017.jpg",
+    "pair_0018.jpg",
+    "pair_0019.jpg",
+    "pair_0020.jpg",
+    "pair_0021.jpg",
+    "pair_0022.jpg",
+    "pair_0023.jpg",
+    "pair_0024.jpg",
+    "pair_0025.jpg",
+    "pair_0026.jpg",
+    "pair_0027.jpg",
+    "pair_0028.jpg",
+    "pair_0029.jpg",
+    "pair_0030.jpg",
+    "pair_0031.jpg",
+    "pair_0032.jpg",
+    "pair_0033.jpg",
+    "pair_0034.jpg",
+    "pair_0035.jpg",
+    "pair_0036.jpg",
+    "pair_0037.jpg",
+    "pair_0038.jpg",
+    "pair_0039.jpg",
+    "pair_0040.jpg",
+    "pair_0042.jpg",
+    "pair_0043.jpg",
+    "pair_0044.jpg",
+    "pair_0045.jpg",
+    "pair_0046.jpg",
+    "pair_0047.jpg",
+    "pair_0048.jpg",
+    "pair_0049.jpg",
+    "pair_0050.jpg",
+    "pair_0051.jpg",
+    "pair_0052.jpg",
+    "pair_0053.jpg",
+    "pair_0054.jpg",
+    "pair_0055.jpg",
+    "pair_0057.jpg",
+    "pair_0058.jpg",
+    "pair_0059.jpg",
+    "pair_0060.jpg",
+    "pair_0061.jpg",
+    "pair_0063.jpg",
+    "pair_0064.jpg",
+    "pair_0065.jpg",
+    "pair_0066.jpg",
+    "pair_0067.jpg",
+    "pair_0068.jpg",
+    "pair_0069.jpg",
+    "pair_0070.jpg",
+    "pair_0071.jpg",
+    "pair_0072.jpg",
+    "pair_0073.jpg",
+    "pair_0074.jpg",
+    "pair_0075.jpg",
+    "pair_0076.jpg",
+    "pair_0077.jpg",
+    "pair_0078.jpg",
+    "pair_0079.jpg",
+    "pair_0080.jpg",
+    "pair_0081.jpg",
+    "pair_0082.jpg",
+    "pair_0083.jpg",
+    "pair_0084.jpg",
+    "pair_0085.jpg",
+    "pair_0086.jpg",
+    "pair_0087.jpg",
+    "pair_0088.jpg",
+    "pair_0089.jpg",
+    "pair_0090.jpg",
+    "pair_0091.jpg",
+    "pair_0092.jpg",
+    "pair_0093.jpg",
+    "pair_0094.jpg",
+    "pair_0095.jpg",
+    "pair_0096.jpg",
+    "pair_0097.jpg",
+    "pair_0098.jpg",
+    "pair_0099.jpg",
+    "pair_0100.jpg",
+    "pair_0102.jpg",
+    "pair_0103.jpg",
+    "pair_0104.jpg",
+    "pair_0105.jpg",
+    "pair_0106.jpg",
+    "pair_0107.jpg",
+    "pair_0108.jpg",
+    "pair_0109.jpg",
+    "pair_0110.jpg",
+    "pair_0111.jpg",
+    "pair_0112.jpg",
+    "pair_0113.jpg"
+  ],
+  "pair_details": [
+    {
+      "image": "pair_0001.jpg",
+      "pair_error_px": 0.008061864821707442,
+      "short_error_px": 0.003669877919700376,
+      "long_error_px": 0.012453851723714509
+    },
+    {
+      "image": "pair_0002.jpg",
+      "pair_error_px": 0.008957778944858623,
+      "short_error_px": 0.003993735393756225,
+      "long_error_px": 0.013921822495961021
+    },
+    {
+      "image": "pair_0003.jpg",
+      "pair_error_px": 0.007932411821647176,
+      "short_error_px": 0.003837340166479538,
+      "long_error_px": 0.012027483476814815
+    },
+    {
+      "image": "pair_0004.jpg",
+      "pair_error_px": 0.007930524935421972,
+      "short_error_px": 0.003703990636523676,
+      "long_error_px": 0.01215705923432027
+    },
+    {
+      "image": "pair_0005.jpg",
+      "pair_error_px": 0.007312163769869904,
+      "short_error_px": 0.0036845716202816925,
+      "long_error_px": 0.010939755919458114
+    },
+    {
+      "image": "pair_0015.jpg",
+      "pair_error_px": 0.007500838526632799,
+      "short_error_px": 0.003947075722570185,
+      "long_error_px": 0.011054601330695413
+    },
+    {
+      "image": "pair_0016.jpg",
+      "pair_error_px": 0.007558579750918227,
+      "short_error_px": 0.0038202296198132763,
+      "long_error_px": 0.011296929882023177
+    },
+    {
+      "image": "pair_0017.jpg",
+      "pair_error_px": 0.007447137177030569,
+      "short_error_px": 0.003890441668575199,
+      "long_error_px": 0.01100383268548594
+    },
+    {
+      "image": "pair_0018.jpg",
+      "pair_error_px": 0.00831062659583122,
+      "short_error_px": 0.0031266768934687557,
+      "long_error_px": 0.013494576298193683
+    },
+    {
+      "image": "pair_0019.jpg",
+      "pair_error_px": 0.008098210200468746,
+      "short_error_px": 0.0034957722892916183,
+      "long_error_px": 0.012700648111645873
+    },
+    {
+      "image": "pair_0020.jpg",
+      "pair_error_px": 0.007232966580746632,
+      "short_error_px": 0.003601766121033451,
+      "long_error_px": 0.010864167040459812
+    },
+    {
+      "image": "pair_0021.jpg",
+      "pair_error_px": 0.008192471479702193,
+      "short_error_px": 0.005058501156408048,
+      "long_error_px": 0.011326441802996337
+    },
+    {
+      "image": "pair_0022.jpg",
+      "pair_error_px": 0.008963952758136816,
+      "short_error_px": 0.005828682847115169,
+      "long_error_px": 0.012099222669158465
+    },
+    {
+      "image": "pair_0028.jpg",
+      "pair_error_px": 0.013927923352980275,
+      "short_error_px": 0.0058281950402039925,
+      "long_error_px": 0.02202765166575656
+    },
+    {
+      "image": "pair_0029.jpg",
+      "pair_error_px": 0.013537377597394453,
+      "short_error_px": 0.005651692135814874,
+      "long_error_px": 0.021423063058974033
+    },
+    {
+      "image": "pair_0030.jpg",
+      "pair_error_px": 0.013528010082756059,
+      "short_error_px": 0.00571447674693927,
+      "long_error_px": 0.021341543418572848
+    },
+    {
+      "image": "pair_0031.jpg",
+      "pair_error_px": 0.013139375022938899,
+      "short_error_px": 0.005480200890036839,
+      "long_error_px": 0.020798549155840958
+    },
+    {
+      "image": "pair_0045.jpg",
+      "pair_error_px": 0.011950720508902475,
+      "short_error_px": 0.0034540476703127927,
+      "long_error_px": 0.020447393347492158
+    },
+    {
+      "image": "pair_0046.jpg",
+      "pair_error_px": 0.011139028579987513,
+      "short_error_px": 0.0035094468595759337,
+      "long_error_px": 0.018768610300399093
+    },
+    {
+      "image": "pair_0047.jpg",
+      "pair_error_px": 0.011530063739443184,
+      "short_error_px": 0.003830573222933232,
+      "long_error_px": 0.019229554255953137
+    },
+    {
+      "image": "pair_0048.jpg",
+      "pair_error_px": 0.011564565297296402,
+      "short_error_px": 0.0037902696265200682,
+      "long_error_px": 0.019338860968072736
+    },
+    {
+      "image": "pair_0049.jpg",
+      "pair_error_px": 0.011313390525312416,
+      "short_error_px": 0.0037282429160273127,
+      "long_error_px": 0.01889853813459752
+    },
+    {
+      "image": "pair_0050.jpg",
+      "pair_error_px": 0.010933261028442064,
+      "short_error_px": 0.00348190221041357,
+      "long_error_px": 0.018384619846470558
+    },
+    {
+      "image": "pair_0051.jpg",
+      "pair_error_px": 0.01060497618429245,
+      "short_error_px": 0.006296667017345204,
+      "long_error_px": 0.014913285351239695
+    },
+    {
+      "image": "pair_0052.jpg",
+      "pair_error_px": 0.010084950559705253,
+      "short_error_px": 0.00532609372696783,
+      "long_error_px": 0.014843807392442674
+    },
+    {
+      "image": "pair_0053.jpg",
+      "pair_error_px": 0.010305260314537466,
+      "short_error_px": 0.005562928917349431,
+      "long_error_px": 0.015047591711725499
+    },
+    {
+      "image": "pair_0054.jpg",
+      "pair_error_px": 0.010930193972990707,
+      "short_error_px": 0.006586542134483745,
+      "long_error_px": 0.015273845811497667
+    },
+    {
+      "image": "pair_0055.jpg",
+      "pair_error_px": 0.01092949123777605,
+      "short_error_px": 0.005658574167907093,
+      "long_error_px": 0.016200408307645006
+    },
+    {
+      "image": "pair_0057.jpg",
+      "pair_error_px": 0.011488042482702526,
+      "short_error_px": 0.008405184912578509,
+      "long_error_px": 0.014570900052826543
+    },
+    {
+      "image": "pair_0058.jpg",
+      "pair_error_px": 0.010411970574349106,
+      "short_error_px": 0.006415452081679106,
+      "long_error_px": 0.014408489067019106
+    },
+    {
+      "image": "pair_0059.jpg",
+      "pair_error_px": 0.010503389320503152,
+      "short_error_px": 0.006416055130542191,
+      "long_error_px": 0.014590723510464114
+    },
+    {
+      "image": "pair_0060.jpg",
+      "pair_error_px": 0.010208084954895792,
+      "short_error_px": 0.00575183320049441,
+      "long_error_px": 0.014664336709297173
+    },
+    {
+      "image": "pair_0061.jpg",
+      "pair_error_px": 0.010457584385814789,
+      "short_error_px": 0.006179969135768369,
+      "long_error_px": 0.014735199635861208
+    },
+    {
+      "image": "pair_0063.jpg",
+      "pair_error_px": 0.006699715102752209,
+      "short_error_px": 0.0037113045958482665,
+      "long_error_px": 0.00968812560965615
+    },
+    {
+      "image": "pair_0064.jpg",
+      "pair_error_px": 0.007050657043321189,
+      "short_error_px": 0.0036086681120625196,
+      "long_error_px": 0.010492645974579858
+    },
+    {
+      "image": "pair_0065.jpg",
+      "pair_error_px": 0.007420897603088644,
+      "short_error_px": 0.0037712908360964773,
+      "long_error_px": 0.011070504370080812
+    },
+    {
+      "image": "pair_0066.jpg",
+      "pair_error_px": 0.007114289725759516,
+      "short_error_px": 0.003461745064203347,
+      "long_error_px": 0.010766834387315686
+    },
+    {
+      "image": "pair_0067.jpg",
+      "pair_error_px": 0.007041635405107756,
+      "short_error_px": 0.0032760755818245133,
+      "long_error_px": 0.010807195228390997
+    },
+    {
+      "image": "pair_0068.jpg",
+      "pair_error_px": 0.007330077849664839,
+      "short_error_px": 0.0037478341381116742,
+      "long_error_px": 0.010912321561218003
+    },
+    {
+      "image": "pair_0069.jpg",
+      "pair_error_px": 0.006939888983316091,
+      "short_error_px": 0.00342821114925832,
+      "long_error_px": 0.010451566817373862
+    },
+    {
+      "image": "pair_0070.jpg",
+      "pair_error_px": 0.006724732101877138,
+      "short_error_px": 0.003423795717377894,
+      "long_error_px": 0.010025668486376383
+    },
+    {
+      "image": "pair_0071.jpg",
+      "pair_error_px": 0.006582978665038022,
+      "short_error_px": 0.003502299550424661,
+      "long_error_px": 0.009663657779651382
+    },
+    {
+      "image": "pair_0072.jpg",
+      "pair_error_px": 0.006676583453529317,
+      "short_error_px": 0.0040284720602874954,
+      "long_error_px": 0.009324694846771139
+    },
+    {
+      "image": "pair_0073.jpg",
+      "pair_error_px": 0.006194483784853022,
+      "short_error_px": 0.003744469236490863,
+      "long_error_px": 0.00864449833321518
+    },
+    {
+      "image": "pair_0074.jpg",
+      "pair_error_px": 0.005818377040307559,
+      "short_error_px": 0.0033992527389492887,
+      "long_error_px": 0.008237501341665829
+    },
+    {
+      "image": "pair_0075.jpg",
+      "pair_error_px": 0.00601301712674417,
+      "short_error_px": 0.003871747526603664,
+      "long_error_px": 0.008154286726884676
+    },
+    {
+      "image": "pair_0076.jpg",
+      "pair_error_px": 0.006080769073285065,
+      "short_error_px": 0.0038445501400654557,
+      "long_error_px": 0.008316988006504674
+    },
+    {
+      "image": "pair_0077.jpg",
+      "pair_error_px": 0.006384320730755727,
+      "short_error_px": 0.004336719614469645,
+      "long_error_px": 0.00843192184704181
+    },
+    {
+      "image": "pair_0078.jpg",
+      "pair_error_px": 0.006311505816975749,
+      "short_error_px": 0.0036659869059363307,
+      "long_error_px": 0.008957024728015166
+    },
+    {
+      "image": "pair_0079.jpg",
+      "pair_error_px": 0.006574883977978825,
+      "short_error_px": 0.0038770871045466335,
+      "long_error_px": 0.009272680851411017
+    },
+    {
+      "image": "pair_0080.jpg",
+      "pair_error_px": 0.00706646021186365,
+      "short_error_px": 0.0037689400075726956,
+      "long_error_px": 0.010363980416154604
+    },
+    {
+      "image": "pair_0081.jpg",
+      "pair_error_px": 0.007292716426147209,
+      "short_error_px": 0.0037629941286738125,
+      "long_error_px": 0.010822438723620605
+    },
+    {
+      "image": "pair_0082.jpg",
+      "pair_error_px": 0.007105226644098893,
+      "short_error_px": 0.003544325363039089,
+      "long_error_px": 0.010666127925158697
+    },
+    {
+      "image": "pair_0083.jpg",
+      "pair_error_px": 0.00702697945344021,
+      "short_error_px": 0.0034221996380467083,
+      "long_error_px": 0.010631759268833712
+    },
+    {
+      "image": "pair_0084.jpg",
+      "pair_error_px": 0.007307087916925721,
+      "short_error_px": 0.0038284620232417227,
+      "long_error_px": 0.01078571381060972
+    },
+    {
+      "image": "pair_0085.jpg",
+      "pair_error_px": 0.006962581250083638,
+      "short_error_px": 0.0034211010029999277,
+      "long_error_px": 0.010504061497167348
+    },
+    {
+      "image": "pair_0086.jpg",
+      "pair_error_px": 0.006630678933538211,
+      "short_error_px": 0.0033317871374610795,
+      "long_error_px": 0.009929570729615343
+    },
+    {
+      "image": "pair_0087.jpg",
+      "pair_error_px": 0.006748103849313349,
+      "short_error_px": 0.0038084909110497915,
+      "long_error_px": 0.009687716787576907
+    },
+    {
+      "image": "pair_0088.jpg",
+      "pair_error_px": 0.007176876074905181,
+      "short_error_px": 0.003901117685506605,
+      "long_error_px": 0.010452634464303756
+    },
+    {
+      "image": "pair_0089.jpg",
+      "pair_error_px": 0.007158340683237289,
+      "short_error_px": 0.0040217808468697045,
+      "long_error_px": 0.010294900519604874
+    },
+    {
+      "image": "pair_0090.jpg",
+      "pair_error_px": 0.006553212691125342,
+      "short_error_px": 0.0035283240521650555,
+      "long_error_px": 0.00957810133008563
+    },
+    {
+      "image": "pair_0091.jpg",
+      "pair_error_px": 0.006468176155699584,
+      "short_error_px": 0.0038875283598973254,
+      "long_error_px": 0.009048823951501844
+    },
+    {
+      "image": "pair_0092.jpg",
+      "pair_error_px": 0.006361656307192924,
+      "short_error_px": 0.0035071977243655303,
+      "long_error_px": 0.009216114890020317
+    },
+    {
+      "image": "pair_0093.jpg",
+      "pair_error_px": 0.006277113723078476,
+      "short_error_px": 0.003639544830546874,
+      "long_error_px": 0.008914682615610079
+    },
+    {
+      "image": "pair_0094.jpg",
+      "pair_error_px": 0.00585623230296507,
+      "short_error_px": 0.0037167040126958634,
+      "long_error_px": 0.007995760593234277
+    },
+    {
+      "image": "pair_0095.jpg",
+      "pair_error_px": 0.006782288126816058,
+      "short_error_px": 0.0037039685623736587,
+      "long_error_px": 0.009860607691258457
+    },
+    {
+      "image": "pair_0096.jpg",
+      "pair_error_px": 0.0058607642278311785,
+      "short_error_px": 0.0035652227338069716,
+      "long_error_px": 0.008156305721855385
+    },
+    {
+      "image": "pair_0097.jpg",
+      "pair_error_px": 0.00573752117766742,
+      "short_error_px": 0.003536727870240538,
+      "long_error_px": 0.007938314485094302
+    },
+    {
+      "image": "pair_0098.jpg",
+      "pair_error_px": 0.006009085901677579,
+      "short_error_px": 0.003378505730688771,
+      "long_error_px": 0.008639666072666388
+    },
+    {
+      "image": "pair_0099.jpg",
+      "pair_error_px": 0.006544648889530935,
+      "short_error_px": 0.0037699650643265785,
+      "long_error_px": 0.009319332714735291
+    },
+    {
+      "image": "pair_0100.jpg",
+      "pair_error_px": 0.007141343952912681,
+      "short_error_px": 0.0037473066004585142,
+      "long_error_px": 0.010535381305366846
+    },
+    {
+      "image": "pair_0102.jpg",
+      "pair_error_px": 0.006953670893430072,
+      "short_error_px": 0.0032222468302446016,
+      "long_error_px": 0.010685094956615541
+    },
+    {
+      "image": "pair_0103.jpg",
+      "pair_error_px": 0.006476149563440622,
+      "short_error_px": 0.0038017199985301907,
+      "long_error_px": 0.009150579128351053
+    },
+    {
+      "image": "pair_0104.jpg",
+      "pair_error_px": 0.006900841345351096,
+      "short_error_px": 0.003496589342830761,
+      "long_error_px": 0.01030509334787143
+    },
+    {
+      "image": "pair_0105.jpg",
+      "pair_error_px": 0.007215124688667949,
+      "short_error_px": 0.0035803869978042894,
+      "long_error_px": 0.010849862379531608
+    },
+    {
+      "image": "pair_0106.jpg",
+      "pair_error_px": 0.008327933286570664,
+      "short_error_px": 0.003763981602976955,
+      "long_error_px": 0.012891884970164373
+    },
+    {
+      "image": "pair_0112.jpg",
+      "pair_error_px": 0.0070797902230736775,
+      "short_error_px": 0.003449343656695241,
+      "long_error_px": 0.010710236789452115
+    },
+    {
+      "image": "pair_0113.jpg",
+      "pair_error_px": 0.007794148949116637,
+      "short_error_px": 0.004753247104713366,
+      "long_error_px": 0.010835050793519907
+    }
+  ],
+  "num_pairs_solver_candidate": 109,
+  "num_pairs_solver_used": 78
+}

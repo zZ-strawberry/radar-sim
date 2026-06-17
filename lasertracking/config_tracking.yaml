@@ -1,0 +1,174 @@
+
+# 模型路径
+models:
+  aerial: 'lasertracking/aerial.pt' # 无人机检测模型（YOLO26n）
+  armor: 'lasertracking/laser_new.pt'  # 激光检测模块训练权重（YOLO26）
+  data_yaml: 'laser.yaml' # 激光模块数据集配置文件（nc=1, names: laser）
+  aerial_class_name: 'item'      # 无人机类别名偏好；不匹配时自动回退最高置信度
+  
+# 串口配置
+serial:
+  port: 'COM8'
+  baudrate: 115200
+  protocol: 'raw'              # raw=旧裸包；framed=帧头帧尾+校验
+  enable_feedback: false       # 是否解析下位机回传姿态（framed 模式下有效）
+  feedback_timeout_ms: 200.0   # 回传姿态有效期，超时则回退到 last_sent 基准
+  enable_velocity_feedforward: false  # 禁用速度前馈：大目标运动慢，前馈只会引入超调
+
+# 仿真/URDF 导出的双相机几何与串口语义（见同目录 gimbal_dual_camera_migration_from_sim.yaml）
+# 当前跟踪仍单路长焦；本块用于：启动时打印基线/视差、可选裁剪下发角度（与双相机重指向共用同一份数据）
+geometry_migration:
+  enabled: true
+  yaml_path: 'gimbal_dual_camera_migration_from_sim.yaml'
+  # 向左为正 roll 的软件上限（度），例如 40 表示 roll≤40°；null=使用 YAML 内字段（默认未填则不裁剪）
+  roll_left_limit_deg: null
+  apply_urdf_joint_limits: false   # true：按 URDF pitch/yaw 弧度限位换算为角度裁剪下发
+  apply_roll_left_cap: false       # true：对 roll 施加向左上限（需 roll_left_limit_deg 或 YAML 内非空）
+
+# GPU配置
+gpu:
+  enable: false                 # 是否使用GPU加速
+
+# 相机采集参数
+camera:
+  exposure_time: 52915.0        # 曝光时间（微秒）35000 = 35ms
+  gain: 3                      # 增益（dB），范围 0-24
+  use_thread: true              # 独立线程采集（减少read阻塞，提高FPS稳定性）
+  
+# 相机标定参数
+calibration:
+  fx: 15989.09                  # 水平焦距（像素）
+  fy: 15985.61                  # 垂直焦距（像素）
+  cx: null                      # 主点x（null=图像中心）
+  cy: null                      # 主点y（null=图像中心）
+  dist_coeffs: null             # 畸变系数 [k1,k2,p1,p2,k3]（null=无畸变）
+  enable_undistort: true        # 是否启用畸变校正
+  
+  # 从文件加载标定参数
+  use_file: false               # 是否从文件加载
+  file_path: 'camera_params.npz'
+
+  # 激光-相机同轴校准文件
+  # 优先级：boresight_file > 下方 pixel_offset；文件不存在/无效时自动回退。
+  boresight_file: 'lasertracking/calibration/boresight.yaml'
+
+  # 激光-相机基线（给 boresight_calibrator 的 parallax overlay + 离线 parallax_estimator 用）
+  # 如果只做单距离 boresight，这里可以留空；要启用视差检查时填上。
+  baseline:
+    bx: 0.02                    # 水平基线(米)，向右为正
+    by: 0.0                     # 垂直基线(米)，向下为正
+    z_ref: 20.0                 # boresight 所在距离(米)，0=不使用
+  parallax_runtime:
+    enabled: true               # 运行时视差补偿总开关
+    source: 'fixed'              # auto | external | fixed | bbox_width | bbox_height | bbox_auto
+    fixed_distance_m: 20.0      # auto 且无其它距离来源时回退到该距离；当前 15~28m 场景建议先取中间值
+    # target_width_m: 0.0         # 目标真实宽度(米)，配置后可用 bbox_width/auto 估距
+    # target_height_m: 0.0        # 目标真实高度(米)，配置后可用 bbox_height/auto 估距
+    min_distance_m: 10.0        # 估计距离下限(米)
+    max_distance_m: 40.0        # 估计距离上限(米)
+    distance_alpha: 0.35        # 距离一阶低通系数，越大越跟手
+    hold_last_distance: true    # 短时丢检时沿用上次距离
+    min_bbox_px: 8.0            # 小于该框尺寸时不做 bbox 估距
+
+# 检测器参数
+detector:
+  strategy: 'armor_first'     
+  vehicle:
+    img_size: [640, 640]        # 输入图像尺寸
+    conf_thres: 0.10            # 置信度阈值
+    iou_thres: 0.50             # NMS IOU阈值
+    max_det: 14                 # 最大检测数
+  armor:
+    img_size: [384, 384]        # 输入图像尺寸（平衡精度与速度）
+    conf_thres: 0.60            # 置信度阈值
+    iou_thres: 0.40             # NMS IOU阈值
+    max_det: 1                  # 最大检测数（优先最高置信度）
+
+# ROI策略
+roi:
+  expand_ratio: 0.15            # ROI扩展比例（向外扩展15%）
+  min_size: 20                  # 最小ROI尺寸
+  search_size: 200              # 目标丢失后的搜索区域大小
+
+# 滤波器配置
+filter:
+  type: 'predictive_kalman'
+  predictive_kalman:
+    enabled: true
+    prediction_time_ms: 25.0    # 适度前向预测补偿管道延迟，同时避免过强阻尼拖慢收敛
+    process_noise: 8        # 提高过程噪声→更信任测量值→更快响应实际位置变化
+    measurement_noise: 6e-1     # 降低测量噪声→减少滤波滞后（原0.1偏保守导致响应迟钝）
+    max_rate_pitch: 120.0
+    max_rate_roll: 120.0
+
+# 死区控制配置
+deadzone:
+  enabled: true
+  pitch: 0.13                   # 略微缩小死区→允许更精细的中心修正
+  roll: 0.13
+  settle_frames: 3
+  visual_radius: 45
+  pitch_exit_ratio: 1.25        # pitch死区迟滞退出倍率（>1可显著减小上下边界抖动）
+
+# 像素补偿：改变最终相机停留位置
+# 仅在 calibration.boresight_file 未生效时使用（回退值）。
+# 推荐：运行 lasertracking/boresight_calibrator.py 现场校准后，该字段会被自动同步更新。
+pixel_offset: [-96.75, -85.50]    # 像素补偿(dx,dy)：激光点相对画面中心的固定偏差（右/下为正）
+
+# 帧间隔控制配置
+frame_interval:
+  enabled: false               
+  interval: 1
+
+# 云台控制
+gimbal:
+  mode: 'absolute'
+  control:
+    gain_pitch: 0.37            # 适度提高→每帧修正35%误差（原28%收敛太慢）
+    gain_roll: 0.43             # 适度提高→每帧修正43%误差（原35%收敛太慢）
+    use_feedback_state: false   # true=控制基准使用下位机回传姿态（需 serial.enable_feedback=true）
+    max_step_deg_pitch: 3.3     # 放宽步长限制→大误差时允许更快修正
+    max_step_deg_roll: 7.0      # 放宽步长限制→大误差时允许更快修正
+    smooth_pitch: 0.72          # pitch命令平滑系数，减小上下抖动（越小越稳）
+    smooth_roll: 0.88           # roll可稍激进，兼顾响应
+    pitch_reversal_damping: 0.55 # pitch误差小范围换向时抑制系数，防止来回打舵
+    pitch_reversal_window_deg: 1.30
+    hold_resend_enabled: true   # 非检测帧重发上一条绝对角命令，提升链路稳定性
+    hold_resend_hz: 60.0        # 命令重发上限频率（受主循环帧率限制）
+
+# 目标跟踪
+tracking:
+  max_lost_frames: 10           # 最大丢失帧数
+  max_distance: 200             # 目标关联最大距离（像素）
+  switch_confirm_frames: 2      # 主目标切换需连续确认帧数（防单帧误检）
+  switch_consistency_px: 80     # 候选新目标帧间一致性阈值（像素）
+
+# 失锁主动扫描（不改下位机协议）
+scan:
+  enabled: true
+  pattern: 'spiral'             # spiral | circle
+  enter_lost_frames: 3          # 连续丢失多少个“检测帧”后启动扫描
+  reacq_confirm_frames: 2       # 连续检测到多少个“检测帧”后退出扫描
+
+  # circle参数
+  circle_radius_deg: 4.0
+  circle_rate_hz: 0.20
+
+  # spiral参数（默认推荐）
+  spiral_spacing_deg: 1.8       # 每圈间距（度）
+  spiral_speed_deg_s: 10.0      # 路径速度（度/秒）
+  spiral_r_max_deg: 10.0        # 最大半径（度）
+  spiral_return: false          # 到达最大半径后是否回扫
+  k_roll: 1.4                   # 横向扫描尺度
+  k_pitch: 1.0                  # 纵向扫描尺度
+  
+# 可视化
+visualization:
+  show_vehicle_box: true        # 显示车辆框
+  show_armor_box: true          # 显示装甲板框
+  show_trajectory: false         # 显示轨迹
+  trajectory_length: 50         # 轨迹最大长度
+  show_target_id: false          # 显示目标ID
+  show_stats: true              # 显示统计信息
+  show_detect_method: false      # 显示检测方式（direct/vehicle_roi/search_roi）
+

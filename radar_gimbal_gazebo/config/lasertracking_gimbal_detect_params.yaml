@@ -1,0 +1,144 @@
+lasertracking_tracker:
+  ros__parameters:
+    # ===== 公共基线（长/短焦未单独写 model 时使用）=====
+    model_path: "lasertracking/laser_new.pt"  # 基线 .pt 权重路径（激光模块）
+    use_tensorrt: false  # 是否优先 TensorRT（.engine）
+    trt_engine_path: "lasertracking/laser_new.engine"  # 基线 engine；长/短焦 trt 留空时回退到此
+
+    # ===== 长焦推理（跟踪主链路）=====
+    tele_model_path: "lasertracking/laser_new.pt"  # 长焦激光模块模型
+    tele_trt_engine_path: "lasertracking/57.engine"  # 长焦激光模块engine
+    tele_aerial_model_path: "lasertracking/aerial.pt"  # 长焦无人机检测模型（用于ROI约束）
+    tele_aerial_trt_engine_path: "lasertracking/best_new.engine"  # 长焦无人机检测engine
+    tele_aerial_min_conf: 0.10
+    tele_infer_device: "cuda:0"  # 长焦推理设备
+    tele_infer_imgsz: 640  # 长焦推理尺寸（需与长焦 engine 固定输入一致）
+    tele_infer_half: true  # 长焦 FP16
+    tele_min_conf: 0.60  # 长焦置信度阈值
+    tele_direct_conf_gate: 0.70  # 长焦全图直检>=该值则直接采用；低于该值走无人机ROI回退
+    tele_detect_hz: 25.0  # 与控制环一致，减少「检测比控制快」带来的阶跃感
+    loop_hz: 25.0
+
+    # ===== 短焦推理（可与长焦不同尺寸/不同 engine；整链开关见 hw/sim 中 enable_short_focal_pipeline）=====
+    wide_model_path: "lasertracking/aerial.pt"  # 短焦专用 .pt（无人机）
+    wide_trt_engine_path: "lasertracking/best_new.engine"  # 短焦专用engine
+    wide_infer_device: "cuda:0"  # 短焦推理设备
+    wide_infer_imgsz: 640  # 短焦推理尺寸（若用独立 engine 须与此一致）
+    wide_infer_half: true  # 短焦 FP16
+    wide_min_conf: 0.002  # 短焦置信度阈值（实机光照差时可略降）
+    wide_detect_right_half_only: false  # hw_params 可覆盖；false=全画面检无人机
+    wide_detect_hz: 25.0  # 短焦检测线程频率(Hz)
+    wide_detect_hz_idle: 25.0  # 正常跟踪时短焦低频待机(Hz)
+    wide_detect_hz_reacq: 25.0  # 重获期间短焦高频推理(Hz), <=0 时回退到 wide_detect_hz
+
+    # ===== 视场参数（与 minor/*_intrinsics.json 一致；hw_params 可覆盖）=====
+    tele_hfov_deg: 5.3495
+    tele_vfov_deg: 4.0101
+    wide_hfov_deg: 35.0177
+    wide_vfov_deg: 23.7492
+
+    # ===== 激光校准与运行补偿 =====
+    # boresight_file 优先；文件不存在/无效时回退 pixel_offset_x/y。
+    boresight_file: "lasertracking/calibration/boresight.yaml"
+    pixel_offset_x: -96.75  # 回退固定补偿(dx, px)
+    pixel_offset_y: -85.50  # 回退固定补偿(dy, px)
+    calibration_fx: 15412.022117618495  # 长焦 fx(px)，minor/long50mm_camera_intrinsics.json
+    calibration_fy: 15424.62801200107  # 长焦 fy(px)
+    baseline_bx: 0.02  # 激光相对相机水平基线(m)
+    baseline_by: 0.0  # 激光相对相机垂直基线(m)；须为浮点，勿写 0（会被当成整型）
+    baseline_z_ref: 15.0  # boresight 参考距离(m)，与激光标定距离一致；须为浮点
+    parallax_enabled: true  # 仍大幅晃动可暂改 false 排除视差补偿（仅调试用）
+    parallax_source: "fixed"  # auto | fixed | bbox_width | bbox_height | bbox_auto
+    parallax_fixed_distance_m: 15.0
+    # parallax_target_width_m: 0.0
+    # parallax_target_height_m: 0.0
+    parallax_min_distance_m: 10.0
+    parallax_max_distance_m: 40.0
+    parallax_distance_alpha: 0.40  # 过快会带动瞄准点漂移，易过冲；稳定跟随用中等平滑
+    parallax_hold_last_distance: true
+    parallax_min_bbox_px: 8.0
+
+    # ===== 图像预处理（默认关闭：原图推理；仿真/实机明暗请调 hik_*.yaml 或打开下列开关）=====
+    enable_dynamic_tele_exposure: false
+    tele_exposure_search_gain: 1.0
+    tele_exposure_track_gain: 1.0
+    tele_exposure_search_offset: 0.0
+    tele_exposure_track_offset: 0.0
+    tele_exposure_lock_frames: 3
+    tele_exposure_lost_frames: 6
+    tele_exposure_min_switch_interval_s: 0.6
+    wide_exposure_gain: 1.0
+    wide_exposure_offset: 0.0
+
+    # ===== 云台控制参数（静止/慢速稳心：小 kp、略大静区、限制单步角增量）=====
+    kp_yaw: 0.27                     #0.28
+    kp_pitch:  0.27                  #0.26
+    command_smooth_yaw: 0.50
+    command_smooth_pitch: 0.48
+    deadzone_yaw_deg: 0.11
+    deadzone_pitch_deg: 0.11
+    pitch_deadzone_exit_ratio: 1.28
+    max_step_rad: 0.026
+    yaw_limit_rad: 3.0  # 偏航角绝对限位(弧度)
+    yaw_left_limit_rad: 0.35  # 左转限位(弧度, yaw>0 为左转)
+    pitch_limit_rad: 1.1  # 俯仰角绝对限位(弧度)
+    yaw_error_sign: -1.0  # 偏航误差方向符号(用于方向校正)
+    pitch_error_sign: 1.0  # 俯仰误差方向符号(用于方向校正)
+
+    # ===== 速度前馈与预测滤波 =====
+    # kalman_prediction_time_ms=0：关闭「误差×速度」超前项，静止目标下过冲主因常为此（框抖→假速度）
+    enable_velocity_feedforward: false
+    velocity_decay_multiple: 5.0
+    enable_kalman_filter: false 
+    kalman_prediction_time_ms: 0.01
+    kalman_process_noise: 0.01
+    kalman_measurement_noise: 0.85
+    kalman_max_rate_pitch_deg_s: 0.1
+    kalman_max_rate_roll_deg_s: 0.1
+
+    # ===== 辅助重获（扫描/短焦可独立测试） =====
+    enable_reacq_assist: true # 总开关：丢失长焦目标后，启用辅助重获状态机
+    enable_reacq_scan: true # 扫描重获功能开关（可单独测试）
+    enable_reacq_wide_assist: false # 短焦辅助重获功能开关（可单独测试）
+    reacq_require_first_lock: false # 启动后需先锁定过一次长焦目标，才允许进入重获流程
+    reacq_enter_lost_frames: 6  # 与曝光回切阈值对齐，避免过早进入重获
+    reacq_wide_enter_lost_frames: 6  # 与 reacq_enter_lost_frames 保持一致
+    reacq_confirm_frames: 2  # 长焦重新连续检测多少帧后退出重获
+    reacq_use_wide_detection: false # 重获期间优先用短焦检测引导云台
+    reacq_max_step_rad: 0.03  # 重获期间单周期最大角步长(弧度)
+    reacq_scan_fallback: true  # 无短焦目标时启用扫描兜底s
+    reacq_scan_spiral_spacing_deg: 11.4592  # 外圈起：每圈半径增量(度)，与旧版 0.20 rad 等价
+    reacq_scan_spiral_spacing_start_deg: 3.0  # 前几整圈内每圈半径增量(度)，宜明显小于上一行以压实中心
+    reacq_scan_spiral_inner_turns: 2.0  # 使用上一行步进的整圈数(每圈 2π)；0=全程只用外圈步进
+    reacq_scan_spiral_speed_deg_s: 7.4485  # 螺旋线速度(度/秒)，与旧版 0.13 rad/s 等价
+    # 螺旋原点=长焦由有→无的第一帧云台 yaw/pitch（丢失点），非「丢够 N 帧才进重获」时的姿态；theta 一圈四向均扫
+    # 丢失扫描预设原点：与下行一致，为相对上电初始的绝对 yaw/pitch（度）；无「由有→无」锚点或丢失过久时以此为圆心
+    reacq_scan_preset_yaw_deg: 5.1794   # 示例：与下方短焦参考角一致时可作常用观测姿态
+    reacq_scan_preset_pitch_deg: -0.80645
+    reacq_scan_use_preset_without_anchor: true       # true：从未有过丢失锚点时以预设为原点（冷启动/从未检出长焦）
+    # 二选一：>0 按秒换算(×本文件 loop_hz)；0 则用下一行「无检测周期数」
+    reacq_scan_use_preset_after_lost_seconds: 0.0
+    reacq_scan_use_preset_after_total_lost_frames: 0  # 上一项为 0 且本项>0：无长焦检测≥该控制周期则迁预设原点；0=关
+    reacq_scan_spiral_r_max_deg: 12.6051  # 螺旋最大半径(度)，与旧版 0.22 rad 等价
+    reacq_scan_spiral_yaw_scale: 1.0  # 与 pitch 相同则 (yaw,pitch) 平面为圆盘；勿一大一小以免只「拉长」某一轴
+    reacq_scan_spiral_pitch_scale: 1.5
+    reacq_scan_spiral_theta_max_deg: 1439.84  # 螺旋参量 θ 上限(度)，与旧版 25.13 rad≈4 圈 相当
+    reacq_wide_lost_tolerance_frames: 30  # 短焦短时丢帧保持次数，避免频繁回落到扫描
+    reacq_scan_to_wide_frames: 20  # 扫描多少帧仍未重获则立即切入短焦辅助
+    reacq_wide_phase_frames: 18  # 短焦辅助连续尝试帧数，超时后回到扫描再重试
+    # 短焦→长焦外参 R 左上 2x2 + 光轴偏差角（minor/stereo_short_to_long_extrinsics.json）
+    reacq_wide_map_m00: 0.9992495136274293
+    reacq_wide_map_m01: 0.014371906748208027
+    reacq_wide_map_m10: -0.014711585823869012
+    reacq_wide_map_m11: 0.999849485194077
+    # 与 hw_params 一致：实测指令相对初始位姿 yaw/roll=5.179403° pitch=-0.806449°
+    reacq_wide_ref_yaw_rad: 0.09039763563767186
+    reacq_wide_ref_pitch_rad: -0.01407519029941575
+
+    # ===== 调试图话题（总开关 + 分路；任一路 true 且总开关 true 才发布对应 Image）=====
+    enable_debug_image_publish: true
+    enable_tele_debug_image_publish: true   # /lasertracking/debug_image 长焦
+    enable_wide_debug_image_publish: false  # /lasertracking/wide_debug_image 短焦
+    # 长/短焦调试图限宽(px)；0=原图。960~1280 可明显提高 debug 话题帧率（检测仍用原图）
+    tele_debug_image_max_width: 640
+    wide_debug_image_max_width: 960

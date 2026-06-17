@@ -1,0 +1,16 @@
+# 激光-相机视差距离评估工具配置
+# 用法：
+#   python lasertracking/parallax_estimator.py --config lasertracking/calibration/parallax.yaml
+#   python lasertracking/parallax_estimator.py --config lasertracking/calibration/parallax.yaml --relative
+
+fx: 15989.09        # 相机水平焦距(像素) - 与 config_tracking.yaml 的 calibration.fx 保持一致
+fy: 15985.61        # 相机垂直焦距(像素)
+bx: 0.02            # 激光-相机水平基线(米)，向右为正；现场用卷尺量激光出光点相对镜头光心的水平偏移
+by: 0.00            # 激光-相机垂直基线(米)，向下为正
+z_min: 1.0          # 评估距离下限(米)
+z_max: 50.0         # 评估距离上限(米)
+z_ref: 30.0         # boresight 所在距离(米)；0 表示无穷远对齐（绝对偏置）
+step: 1.0           # 采样步长(米)
+eps_list: [2, 3, 5] # 可接受的像素偏置阈值(px)
+
+#[ 或 - 减小步长; ]、+ 或 = 增大步长; 按 s 保存。  左键点击激光点位置

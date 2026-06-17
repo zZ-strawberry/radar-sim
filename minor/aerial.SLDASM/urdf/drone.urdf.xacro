@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="drone" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!--
+    三段装饰圆柱相对机身（base_link）的竖直位置：改 trim_stack_base_z 即可整体平移。
+    含义：下段圆柱几何中心在 base_link 坐标系中的 Z（米）。上、中段由长度自动对齐接缝。
+    ROS2：ros2 launch ... sim.launch.py trim_stack_base_z:=0.72
+    ROS1：roslaunch ... drone.launch trim_stack_base_z:=0.72
+    也可在 xacro 里改 default。
+  -->
+  <xacro:arg name="trim_stack_base_z" default="0.639"/>
+  <xacro:property name="_trim_z0" value="$(arg trim_stack_base_z)"/>
+
+  <xacro:property name="trim_L_lower" value="0.026"/>
+  <xacro:property name="trim_L_mid" value="0.02"/>
+  <xacro:property name="trim_L_upper" value="0.026"/>
+
+  <xacro:property name="trim_r_lower" value="0.026"/>
+  <xacro:property name="trim_r_mid" value="0.022"/>
+  <xacro:property name="trim_r_upper" value="0.026"/>
+
+  <xacro:property name="trim_z_lower" value="${_trim_z0}"/>
+  <xacro:property name="trim_z_mid" value="${_trim_z0 + trim_L_lower/2.0 + trim_L_mid/2.0}"/>
+  <xacro:property name="trim_z_upper" value="${_trim_z0 + trim_L_lower/2.0 + trim_L_mid + trim_L_upper/2.0}"/>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0.6985431628827 0.000505830477429296 0.00181063718438452" rpy="0 0 0"/>
+      <mass value="95.8091002453314"/>
+      <inertia ixx="5.38863553329427" ixy="-0.000134833723205326" ixz="-0.000302212849676338"
+               iyy="3.4021379811665" iyz="-0.0116087658628491" izz="3.37969927101911"/>
+    </inertial>
+
+    <visual name="base_link_mesh">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://drone/meshes/base_link.STL"/>
+      </geometry>
+      <material name="m_drone_black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+
+    <visual name="trim_lower_vis">
+      <origin xyz="0 0 ${trim_z_lower}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${trim_r_lower}" length="${trim_L_lower}"/>
+      </geometry>
+      <material name="m_trim_black_lower">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <visual name="trim_mid_vis">
+      <origin xyz="0 0 ${trim_z_mid}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${trim_r_mid}" length="${trim_L_mid}"/>
+      </geometry>
+      <material name="m_trim_red_mid">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <visual name="trim_upper_vis">
+      <origin xyz="0 0 ${trim_z_upper}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${trim_r_upper}" length="${trim_L_upper}"/>
+      </geometry>
+      <material name="m_trim_black_upper">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://drone/meshes/base_link.STL"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 ${trim_z_lower}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${trim_r_lower}" length="${trim_L_lower}"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 ${trim_z_mid}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${trim_r_mid}" length="${trim_L_mid}"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 ${trim_z_upper}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${trim_r_upper}" length="${trim_L_upper}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <gazebo reference="base_link">
+    <kinematic>true</kinematic>
+    <gravity>false</gravity>
+  </gazebo>
+</robot>

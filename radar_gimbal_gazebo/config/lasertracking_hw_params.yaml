@@ -1,0 +1,146 @@
+lasertracking_tracker:
+  ros__parameters:
+    # ===== 1) 运行与控制链路（实机必改）=====
+    runtime_mode: "hw"  # 固定: hw
+    publish_upper_cmd_in_hw: false  # 若还要保留ROS控制话题联调可改true
+    # 下位机链路：serial=UART(USB转串口等 ttyUSB*); usb=USB CDC 虚拟串口(ttyACM*)。协议与波特率仍用下方 hw_serial_*。
+    hw_comm_link: "serial"  # serial | usb
+    # 实机：udev 规则 radar_gimbal_gazebo/udev/99-radar-ch341-serial.rules 提供稳定名 radar_USB0/1（对应原 ttyUSB0/1 拓扑）
+    hw_serial_port: "/dev/ttyUSB1"  # UART 时打开此设备；usb 时若 hw_usb_serial_port 为空则回退此路径
+    hw_usb_serial_port: "/dev/ttyACM0"  # usb 模式优先用此节点；不需要 USB 时可留空并令 hw_comm_link=serial
+    hw_serial_baudrate: 115200
+    hw_serial_protocol: "framed"  # raw / framed；framed含帧头帧尾+CRC8
+    hw_serial_enable_feedback: false  # 解析下位机回传姿态帧（需framed）
+    hw_use_feedback_state: false  # true=用回传姿态覆盖本地姿态状态
+    hw_feedback_max_age_s: 0.20  # 回传状态最大可用时延
+    upper_cmd_topic: "/lasertracking/upper_cmd"
+
+    # ===== 2) 实机相机话题（实机必改）=====
+    wide_image_topic: "/fixed_camera/image_raw"  # 短焦图像话题（与 hik_wide.yaml 对齐）
+    tele_image_topic: "/gimbal_camera/image_raw"  # 长焦图像话题（与 hik_tele.yaml 对齐）
+    # 长焦原图内录（独立线程写盘；默认 MJPG+AVI 帧内编码，较 mp4 更利实时/抽检；要小文件可改 mp4v+.mp4）
+    enable_tele_raw_recording: true
+    # 非空=往该已存在目录写 tele_long_*.avi（不会自动 mkdir）；空=用 cwd/recordings/tele_raw 并自动创建
+    tele_recording_output_dir: "/media/yy/D17138CFBFD978CD/rad"
+    tele_recording_fps: 25.0       # 与 hik_tele acquisition_frame_rate 对齐为宜
+    tele_recording_fourcc: "MJPG"
+    tele_recording_extension: ""   # 空=按 fourcc 自动 .avi/.mp4
+    tele_recording_queue_max: 48
+    tele_recording_subsample: 1   # 每 N 帧入队 1 次；>1 可进一步减轻拷贝（不影响检测）
+    # 每次启动在 tele_recording_output_dir 下新建 {tele_game_folder_prefix}_日期时间_微秒 子目录，按帧保存长焦原图（后台线程，不影响检测）
+    enable_tele_game_folder_images: true
+    tele_game_folder_prefix: "game"
+    tele_game_image_queue_max: 32
+    tele_game_image_subsample: 1
+    tele_game_image_format: "jpg"
+    tele_game_jpeg_quality: 92
+    debug_image_topic: "/lasertracking/debug_image"
+    wide_debug_image_topic: "/lasertracking/wide_debug_image"
+    wide_detection_topic: "/lasertracking/wide_detection"
+    # 短焦整链总闸：false=不订阅、不创建短焦发布器、不推理、重获不用短焦（tracker 代码默认亦为 false）
+    enable_short_focal_pipeline: false
+    # 短焦检测（仅当 enable_short_focal_pipeline 为 true 时有效）
+    enable_wide_detection: false
+    # enable_debug_image_publish 在 lasertracking_gimbal_detect_params.yaml 配置（hw 本文件在后加载，写 true 会覆盖 detect 的 false）
+
+    # ===== 2b) 海康相机曝光/增益（唯一维护处：hw_sdk.launch.py 启动时覆盖两路海康节点的 exposure_time / gain）=====
+    hw_hik_wide_exposure_time: 16000.0  # 短焦曝光时间（微秒）
+    hw_hik_wide_gain: 17.9               # 短焦增益（dB）
+    # 须小于帧周期：hik_tele.yaml acquisition_frame_rate=25 → 周期 40ms，曝光应 <40000µs；曾用 45000@60fps 会丢帧/NODATA
+    hw_hik_tele_exposure_time: 15500.0   # 长焦曝光（µs）；需更亮可提高帧周期(降 acquisition_frame_rate)再加大曝光
+    hw_hik_tele_gain: 20.0               # 长焦增益（dB）
+
+    # ===== 2c) YOLO 推理设备（有可用 NVIDIA 驱动时用 cuda:0；仅 torch+cpu 或驱动未加载时改 cpu）=====
+    tele_infer_device: "cuda:0"
+    tele_aerial_infer_device: "cuda:0"
+    wide_infer_device: "cuda:0"
+ 
+    # ===== 3) 实机相机内参（来自 minor/*.json，1440x1080 长焦 / 3072x2048 短焦）=====
+    # 源: minor/long50mm_camera_intrinsics.json, minor/short_camera_intrinsics.json
+    # FOV 由 fx,fy 与图像宽高计算: hfov=2*atan(W/2/fx), vfov=2*atan(H/2/fy)
+    tele_hfov_deg: 5.3495
+    tele_vfov_deg: 4.0101
+    wide_hfov_deg: 35.0177
+    wide_vfov_deg: 23.7492
+    calibration_fx: 15412.022117618495             # fx: 15989.09  fy: 15985.61
+    calibration_fy: 15424.62801200107
+    # 以下为 JSON 内参记录（节点未声明，勿写成 ros__parameters 键）:
+    # 长焦 cx,cy: 695.5968760871282, 576.1514835793932
+    # 短焦 fx,fy,cx,cy: 4868.952055209413, 4869.920568841472, 1523.9776397810892, 1091.5752279688688
+
+    # ===== 4) 实机激光-相机外参与落点补偿参数位（请填实测值）=====
+    boresight_file: "lasertracking/calibration/boresight.yaml"  # 启用运行时自动读取校准文件
+    pixel_offset_x: -96.75  # 固定落点补偿 dx(px)
+    pixel_offset_y: -85.50  # 固定落点补偿 dy(px)
+    baseline_bx: 0.02  # TODO: 实机激光相对长焦水平基线(m)
+    baseline_by: 0.0  # TODO: 实机激光相对长焦垂直基线(m)；须为浮点，勿写 0（ROS 会当成整型）
+    baseline_z_ref: 15.0  # TODO: 实机boresight参考距离(m)，与激光标定距离一致；须为浮点
+    parallax_enabled: true
+    parallax_source: "fixed"  # fixed / auto / bbox_width / bbox_height / bbox_auto
+    parallax_fixed_distance_m: 15.0  # TODO: 实机常见目标距离；与标定距离一致时常取同值
+    parallax_min_distance_m: 10.0
+    parallax_max_distance_m: 40.0
+    parallax_distance_alpha: 0.35
+    parallax_hold_last_distance: true
+    parallax_min_bbox_px: 8.0
+
+    # ===== 5) 双相机相对外参 =====
+    # R 左上 2x2 仍来自 minor/stereo_short_to_long_extrinsics.json
+    # 参考角：以「相对初始位姿的最终指令」为准（实测）；下位机反馈仅作记录
+    #   指令 pitch=-0.806449° yaw/roll=5.179403° | 反馈 pitch=0.267916° yaw/roll=5.185379°
+    # 立体平移 T_m（仅记录）: -0.047978, 0.039256, -0.002525
+    reacq_wide_map_m00: 0.9992495136274293
+    reacq_wide_map_m01: 0.014371906748208027
+    reacq_wide_map_m10: -0.014711585823869012
+    reacq_wide_map_m11: 0.999849485194077
+    reacq_wide_ref_yaw_rad: 0.09039763563767186
+    reacq_wide_ref_pitch_rad: -0.01407519029941575
+
+    # ----- 丢失扫描 / 重获（与 detect 同键名，launch 里本文件后加载会覆盖）-----
+    # 下面数值为你当前实测配置，未改数。日常一般只动「螺旋形状 + 预设圆心」几行（标 ★）。
+    enable_reacq_assist: true
+    enable_reacq_scan: true
+    enable_reacq_wide_assist: false
+    reacq_require_first_lock: false
+    reacq_confirm_frames: 2
+    reacq_use_wide_detection: false
+    reacq_max_step_rad: 0.03
+    reacq_scan_fallback: true
+    # ★ 螺旋：外圈疏密 | ★ 内圈前几圈更密 | ★ 内圈圈数(0=关内圈) | ★ 走螺旋快慢 | ★ 最大扫多远 | 偏航/俯仰拉长比 | 扫多久回卷重来
+    reacq_scan_spiral_spacing_deg: 6.4592
+    reacq_scan_spiral_spacing_start_deg: 0.5
+    reacq_scan_spiral_inner_turns: 1.5
+    reacq_scan_spiral_speed_deg_s: 5.4485 
+    reacq_scan_spiral_r_max_deg: 7.6051
+    reacq_scan_spiral_yaw_scale: 1.725
+    reacq_scan_spiral_pitch_scale: 1.76
+    reacq_scan_spiral_theta_max_deg: 1439.84
+    # ★ 无「刚丢目标那一帧」锚点时，螺旋绕哪一点转（相对上电初始，度；请带小数点）
+    reacq_scan_preset_yaw_deg:  -14.4             #-9.0
+    reacq_scan_preset_pitch_deg: -1.5            #-4.0
+    reacq_scan_use_preset_without_anchor: true
+    # 无长焦检测累计多久后，把螺旋圆心迁到下方预设角并重卷 θ（周期≈1/loop_hz，见 lasertracking_gimbal_detect_params.yaml 的 loop_hz）
+    reacq_scan_use_preset_after_lost_seconds: 2.0
+    # 仅当上一项为 0 时生效：用「无检测控制周期数」作阈值（与秒二选一）
+    reacq_scan_use_preset_after_total_lost_frames: 0
+    reacq_scan_to_wide_frames: 20
+    reacq_wide_phase_frames: 18
+    reacq_wide_lost_tolerance_frames: 30
+
+    # ===== 6) 图像预处理（可选；默认关闭，与激光检测一致走原图推理；明暗仅靠 hik_*.yaml 曝光）=====
+    enable_dynamic_tele_exposure: false
+    tele_exposure_search_gain: 1.0
+    tele_exposure_track_gain: 1.0
+    tele_exposure_search_offset: 0.0
+    tele_exposure_track_offset: 0.0
+    tele_exposure_lock_frames: 3
+    tele_exposure_lost_frames: 6
+    tele_exposure_min_switch_interval_s: 0.6
+    wide_exposure_gain: 1.0
+    wide_exposure_offset: 0.0
+    wide_detect_right_half_only: false  # true 时仅画面右半边参与检测，无人机在左侧会永远检不出
+
+    # ===== 7) 重获触发阈值（和曝光回切保持一致）=====
+    reacq_enter_lost_frames: 6
+    reacq_wide_enter_lost_frames: 6
+    yaw_left_limit_rad:  0.2  # 左转限位(弧度, yaw>0 为左转)

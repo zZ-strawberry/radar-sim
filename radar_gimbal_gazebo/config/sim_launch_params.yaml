@@ -1,0 +1,22 @@
+sim_launch:
+  trim_stack_base_z: 0.610  # 无人机模型装饰圆柱在 base_link 中的Z偏移(米)
+  enable_lasertracking: true  # 是否启动 lasertracking 相关节点
+
+  drone_random_motion:
+    enabled: true  # 是否启用无人机随机运动节点
+    center_x: 20.0  # 往返运动中心X(世界系, 米)
+    center_y: 0.0  # 往返运动中心Y(世界系, 米)
+    center_z: 1.0  # 往返运动中心Z(世界系, 米)
+    axis: "x"  # 主运动轴: x/y/z
+    half_range_m: 1.5  # 主轴单向最大位移(米)
+    speed_min: 0.2  # 主轴速度下限(m/s)
+    speed_max: 0.8  # 主轴速度上限(m/s)
+    speed_jitter_mps: 0.12  # 主轴速度抖动幅度(m/s), 0表示关闭
+    height_half_range_m: 0.5  # 高度方向单向最大偏移(米)
+    height_speed_min: -1.0  # 高度速度下限(m/s), -1表示跟随 speed_min
+    height_speed_max: -1.0  # 高度速度上限(m/s), -1表示跟随 speed_max
+    height_speed_jitter_mps: -1.0  # 高度速度抖动(m/s), -1表示跟随 speed_jitter_mps
+    height_stop_prob: 0.03  # 每步触发高度停顿的概率(0~1)
+    height_reverse_prob: 0.02  # 每步触发高度提前反向的概率(0~1)
+    height_pause_min_s: 0.15  # 高度停顿最短时长(秒)
+    height_pause_max_s: 0.6  # 高度停顿最长时长(秒)

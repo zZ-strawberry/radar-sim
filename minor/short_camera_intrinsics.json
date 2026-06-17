@@ -1,0 +1,42 @@
+{
+  "created_at": "2026-05-02T22:32:53",
+  "camera_name": "short_focal_camera",
+  "board": {
+    "type": "symmetric_circles_grid",
+    "pattern_cols": 9,
+    "pattern_rows": 6,
+    "spacing_mm": 9.0
+  },
+  "image_size": {
+    "width": 3072,
+    "height": 2048
+  },
+  "num_images_total": 47,
+  "num_images_used": 47,
+  "rms": 0.1166587123758788,
+  "mean_reprojection_error_px": 0.01391677775418821,
+  "camera_matrix": [
+    [
+      4868.952055209413,
+      0.0,
+      1523.9776397810892
+    ],
+    [
+      0.0,
+      4869.920568841472,
+      1091.5752279688688
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist_coeffs": [
+    0.004644895720182734,
+    0.22330055315174474,
+    -0.0003149653133987538,
+    -0.0017576702606376122,
+    -0.07203463344460802
+  ]
+}

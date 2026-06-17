@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>drone</name>
+  <version>1.0.0</version>
+  <description>URDF and assets for the drone model (SolidWorks export).</description>
+  <maintainer email="TODO@email.com">TODO</maintainer>
+  <license>BSD</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>xacro</exec_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

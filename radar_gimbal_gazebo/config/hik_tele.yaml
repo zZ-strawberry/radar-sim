@@ -1,0 +1,25 @@
+/**:
+  ros__parameters:
+    # 长焦（tele）；曝光/增益以 lasertracking_hw_params.yaml 的 hw_hik_tele_* 为准（hw_sdk 启动时覆盖）
+    # 长焦（tele）相机节点参数：用于激光模块主跟踪
+    # 双机同接时优先用 device_serial（序列号子串）稳定选中长焦，避免枚举顺序变成 0/1 对调。
+    # 需 hik_camera_ros2_driver 包含 device_serial 参数（见 hik_ros2_ws 中 hik_camera_node.cpp）；留空则退回 device_index。
+    device_serial: "DA6792168"
+    # device_serial 非空时，device_index 仅作占位；匹配失败时节点会报错退出
+    device_index: 0
+    camera_name: "gimbal_camera"
+    frame_id: "gimbal_camera_optical_frame"
+    camera_topic: "/gimbal_camera/image_raw"
+    camera_info_url: ""  # 按当前需求不使用标定文件；仅发布原始图像
+    # false=默认 RELIABLE，与 RViz / image_transport 等常见订阅端一致，避免 RELIABILITY 不兼容
+    use_sensor_data_qos: false
+    # 部分机型无 ADCBitDepth 枚举；false 跳过设置，消除无效报错
+    try_set_adc_bit_depth: false
+    # 启动时 SDK 关触发+关自动曝光，避免 MVS 曾设触发导致一直 NODATA（驱动见 force_continuous_acquisition）
+    force_continuous_acquisition: true
+    pixel_format: "BayerRG8"
+    adc_bit_depth: "Bits_8"
+    # 曝光时间(µs)须小于帧周期：见 lasertracking_hw_params.yaml 的 hw_hik_tele_exposure_time
+    acquisition_frame_rate: 25.0
+    exposure_time: 25000
+    gain: 20.0

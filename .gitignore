@@ -1,0 +1,35 @@
+# Build outputs
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+
+# Model files (large binary files)
+*.engine
+*.onnx
+# *.pt  # Uncomment if you want to exclude PyTorch models
+
+# Recordings / data
+recordings/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ROS
+*.swp
+*.swo
+*~
+
+# Temporary
+tmp_manuals/

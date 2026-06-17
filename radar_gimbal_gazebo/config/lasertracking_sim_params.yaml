@@ -1,0 +1,40 @@
+lasertracking_tracker:
+  ros__parameters:
+    # ===== 运行模式（仿真）=====
+    runtime_mode: "sim"  # 运行模式: sim=仿真话题输出, hw=串口实车输出
+
+    # ===== 通用I/O话题（仿真/实车保持一致）=====
+    wide_image_topic: "/fixed_camera/image_raw"  # 短焦图像输入话题
+    tele_image_topic: "/gimbal_camera/image_raw"  # 长焦图像输入话题
+    # 长焦原图内录（默认 MJPG/AVI；要小体积可改 mp4v）
+    enable_tele_raw_recording: true
+    # 非空=往该已存在目录写文件（不自动 mkdir）；空=用 cwd/recordings/tele_raw
+    tele_recording_output_dir: "/media/yy/D17138CFBFD978CD/rad"
+    tele_recording_fps: 30.0
+    tele_recording_fourcc: "MJPG"
+    tele_recording_extension: ""
+    tele_recording_queue_max: 48
+    tele_recording_subsample: 1
+    # 每次启动在 tele_recording_output_dir 下新建 game_* 子目录按帧存长焦图；无外接盘时可关
+    enable_tele_game_folder_images: false
+    tele_game_folder_prefix: "game"
+    tele_game_image_queue_max: 32
+    tele_game_image_subsample: 1
+    tele_game_image_format: "jpg"
+    tele_game_jpeg_quality: 92
+    upper_cmd_topic: "/lasertracking/upper_cmd"  # 上位机控制命令输出话题
+    debug_image_topic: "/lasertracking/debug_image"  # 长焦检测可视化图像话题
+    wide_debug_image_topic: "/lasertracking/wide_debug_image"  # 短焦检测可视化图像话题
+    wide_detection_topic: "/lasertracking/wide_detection"  # 短焦检测结果输出话题
+
+    # ===== 主循环与相机开关 =====
+    loop_hz: 20.0  # 主控制循环频率(Hz)
+    # 调试图：enable_debug_image_publish 见 lasertracking_gimbal_detect_params.yaml（勿在 sim/hw 重复写，以免覆盖顺序导致失效）
+    # 调试图：后台线程 rgb 解码 + 绘制 + tobytes + publish；主线程只做控制与快照
+    enable_async_debug_publish: true
+    async_debug_drop_if_busy: true  # busy 时跳帧；改 false 可能积压大图像
+    # 与 hw_params 一致；Gazebo 双机仿真需短焦时再改为 true（tracker 代码默认 false）
+    enable_short_focal_pipeline: false
+    enable_wide_detection: false
+    wide_detect_right_half_only: true  # 仿真用；实机见 hw_params 的 wide_detect_right_half_only
+    yaw_left_limit_rad: 0.35  # 左转限位(弧度, yaw>0 为左转)

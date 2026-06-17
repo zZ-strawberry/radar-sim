@@ -1,0 +1,23 @@
+controller_manager:
+  ros__parameters:
+    # 实机驱动页面显示电流环带宽 1000/2000，仿真外环取 1000Hz 贴近实机响应节奏
+    update_rate: 1000
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    gimbal_position_controller_hw:
+      type: position_controllers/JointGroupPositionController
+
+joint_state_broadcaster:
+  ros__parameters:
+    # 状态发布频率（Hz）：用于观测，不必与控制频率一致
+    publish_rate: 100.0
+
+gimbal_position_controller_hw:
+  ros__parameters:
+    # 由限坡节点转发到该控制器，避免上层命令突变直灌控制环
+    interface_name: position
+    joints:
+      - yaw_joint
+      - pitch_joint
