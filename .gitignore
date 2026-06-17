@@ -33,3 +33,6 @@ Thumbs.db
 
 # Temporary
 tmp_manuals/
+
+minor/dataset_shortcam_item/
+minor/dataset_telecam_item/
