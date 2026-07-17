@@ -22,6 +22,7 @@
 2.真实赛场效果
 ![场均反制时长](data/image2.jpg) 
  因为前几场的扫描范围没调好，没能正常捕获无人机和检测模块 TT… ，后面调好了就可以正常反制啦。
+
 ![赛场实现反制两次](data/image3.jpg)
  
  可以实现每局至少反制一次，至多反制两次。
@@ -85,7 +86,7 @@ radar-sim/
 ├── lasertracking/
 │   ├── calibration/            # boresight_calibrator.py / parallax_estimator.py
 │   ├── model/                  # YOLO 模型 (.pt/.onnx/.engine)
-(：best_new 为仿真无人机模型，laser_new 为实际检测模块模型)
+(：best_new 为仿真无人机模型，laser_new 为真实激光检测模块模型)
 │   └── tracking_system_old/    # 旧版独立跟踪系统
 ├── MvImport_Linux/             # 海康 SDK Python 封装
 └── README.md
