@@ -7,7 +7,7 @@ lasertracking_tracker:
     wide_image_topic: "/fixed_camera/image_raw"  # 短焦图像输入话题
     tele_image_topic: "/gimbal_camera/image_raw"  # 长焦图像输入话题
     # 长焦原图内录（默认 MJPG/AVI；要小体积可改 mp4v）
-    enable_tele_raw_recording: true
+    enable_tele_raw_recording: false
     # 非空=往该已存在目录写文件（不自动 mkdir）；空=用 cwd/recordings/tele_raw
     tele_recording_output_dir: "/media/yy/D17138CFBFD978CD/rad"
     tele_recording_fps: 30.0
@@ -36,5 +36,6 @@ lasertracking_tracker:
     # 与 hw_params 一致；Gazebo 双机仿真需短焦时再改为 true（tracker 代码默认 false）
     enable_short_focal_pipeline: false
     enable_wide_detection: false
-    wide_detect_right_half_only: true  # 仿真用；实机见 hw_params 的 wide_detect_right_half_only
+    wide_detect_right_half_only: false  # 仿真用；实机见 hw_params 的 wide_detect_right_half_only
     yaw_left_limit_rad: 0.35  # 左转限位(弧度, yaw>0 为左转)
+    wide_min_conf: 0.5    # 置信度阈值

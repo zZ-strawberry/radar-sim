@@ -1,61 +1,9 @@
-"""激光-相机 boresight 交互式校准工具（Python 版）
+"""激光-相机 boresight 交互式校准工具。
 
-
-两种用法，选一种：
-
-  A) 有模型目标（推荐，支持 ``c`` 键一键对齐检测框中心）
-     目标必须是本项目 YOLO 能识别的对象：
-       - ``best.pt`` (data2_laser.yaml, class=laser) → 激光检测模块本体
-       - ``aerial.pt`` (class=item) → 无人机整机
-     现场步骤：
-       1. 把无人机 / 激光模块架在固定距离的支架上，让它静止；
-       2. 让激光发射器打到它身上或紧挨它的位置；
-       3. 运行本工具，画面上绿色十字会落在 YOLO 检测框中心；
-       4. 按 ``c`` 把红色十字对齐到检测框中心，再用方向键 / 鼠标微调到
-          实际的激光点上；
-       5. 按 ``s`` 保存即可。
-
-  B) 无模型 / 任意目标（加 ``--no-detector`` 启动）
-     不加载 YOLO，画面只有红色十字和激光点。适合：
-       - 没训练模型、临时只想校准 boresight；
-       - 现场用任意静止亮色目标（白色小球 / 亮色纸面）作为激光落点标记。
-     操作：鼠标左键点击激光点 → 方向键微调 → ``s`` 保存。
-
-用法::
-
-    # 模式 A
-    python lasertracking/calibration/boresight_calibrator.py \\
-        --config lasertracking/config_tracking.yaml
-
-    # 模式 B（无检测器）
-    python lasertracking/calibration/boresight_calibrator.py \\
-        --config lasertracking/config_tracking.yaml --no-detector
-
-可选参数::
-
-    --output lasertracking/calibration/boresight.yaml   保存路径
-    --no-detector                                       不加载 YOLO，只用鼠标对激光点
-    --no-sync-config                                    关闭自动同步到 config_tracking.yaml
-    --no-auto-save-on-exit                              退出时不自动保存
-    --step 2                                            初始步长（像素）
-    --window-size 1280x720                              显示窗口尺寸
-    --mvimport-path DIR                                 海康 MvImport 的父目录（或设 MVIMPORT_PATH）
-    --ros-image-topic /gimbal_camera/image_raw          与 hw 参数里 tele_image_topic 一致，ROS 取图
-
-按键：
-  方向键/WASD     移动红色十字（step 像素）
-  [ / -           减小 step（最小 1）
-  ] / + / =       增大 step（最大 200）
-  c               把十字对齐到检测框中心（仅模式 A；同时设为初值）
-  i               把当前十字设为初值（后续 du/dv 从这里开始计）
-  r               重置到初值
-  s               立即保存 boresight.yaml 并（可选）回写配置
-  p               切换 parallax overlay（需要 bx/by/z_ref）
-  q / ESC         退出
-  鼠标左键        移动十字到点击位置
-  鼠标右键        把当前十字设为初值
-  鼠标滚轮        调节 step
+模式 A（有模型）: python ... --config config_tracking.yaml
+模式 B（手动）:   python ... --config config_tracking.yaml --no-detector
 """
+
 
 from __future__ import annotations
 
@@ -81,9 +29,97 @@ for p in (CURRENT_DIR, LASERTRACKING_DIR, PROJECT_ROOT):
     if p not in sys.path:
         sys.path.append(p)
 
-# 复用既有类，避免重新实现相机和检测器
-from camera_thread import ThreadedCamera  # noqa: E402
-from parallax_estimator import parallax_offset  # noqa: E402
+
+class ThreadedCamera:
+    """线程化相机包装器 - 独立线程持续采集最新帧。"""
+
+    def __init__(self, camera, enable_thread=True):
+        self.camera = camera
+        self.enable_thread = bool(enable_thread)
+        self.frame = None
+        self.ret = False
+        self.lock = threading.Lock()
+        self.stopped = True
+        self.frame_count = 0
+        self.thread = None
+        if self.enable_thread:
+            self._start_thread(wait_first_frame=True)
+
+    def _start_thread(self, wait_first_frame=False):
+        if self.thread is not None and self.thread.is_alive():
+            return
+        self.stopped = False
+        self.thread = threading.Thread(target=self._update_loop, daemon=True)
+        self.thread.start()
+        if wait_first_frame:
+            deadline = time.time() + 5.0
+            while time.time() < deadline:
+                with self.lock:
+                    if self.frame is not None:
+                        break
+                time.sleep(0.05)
+
+    def _stop_thread(self):
+        if self.thread is None:
+            return
+        self.stopped = True
+        self.thread.join(timeout=2.0)
+        self.thread = None
+
+    def set_thread_mode(self, enable_thread):
+        enable_thread = bool(enable_thread)
+        if enable_thread == self.enable_thread:
+            return
+        self.enable_thread = enable_thread
+        if self.enable_thread:
+            self._start_thread(wait_first_frame=False)
+        else:
+            self._stop_thread()
+
+    def _update_loop(self):
+        while not self.stopped:
+            try:
+                ret, frame = self.camera.read()
+                if ret:
+                    with self.lock:
+                        self.frame = frame
+                        self.ret = True
+                        self.frame_count += 1
+            except Exception:
+                time.sleep(0.01)
+
+    def read(self):
+        if not self.enable_thread:
+            return self.camera.read()
+        with self.lock:
+            if self.frame is None:
+                return False, None
+            return self.ret, self.frame.copy()
+
+    def release(self):
+        if self.enable_thread:
+            self._stop_thread()
+        self.camera.release()
+
+    def set_camera_params(self, exposure_time=None, gain=None):
+        return self.camera.set_camera_params(exposure_time, gain)
+
+    def get_camera_params(self):
+        return self.camera.get_camera_params()
+
+
+def parallax_offset(fx, fy, bx, by, z, z_ref=None):
+    """返回距离 z(m) 处激光光斑相对瞄准点的像素偏置 (du, dv)。
+    若给定 z_ref>0，返回以 z_ref 处为 0 参考的相对偏置。
+    """
+    if z <= 1e-9:
+        return 0.0, 0.0
+    du = fx * bx / z
+    dv = fy * by / z
+    if z_ref is not None and z_ref > 0.0:
+        du -= fx * bx / z_ref
+        dv -= fy * by / z_ref
+    return du, dv
 
 
 WINDOW_NAME = "boresight_calibrator"
@@ -578,22 +614,10 @@ def build_detector(config: Dict):
     except Exception:
         device = "cpu"
 
-    try:
-        from aerial_tracking_system import AerialDetectorAdapter  # noqa: WPS433
-        return AerialDetectorAdapter(
-            weights_path=weights,
-            img_size=(int(img_size[0]), int(img_size[1])),
-            conf_thres=float(detector_cfg.get("conf_thres", 0.25)),
-            iou_thres=float(detector_cfg.get("iou_thres", 0.45)),
-            max_det=int(detector_cfg.get("max_det", 1)),
-            device=device,
-            backend=backend,
-            data=data_yaml,
-            ui=False,
-        )
-    except Exception as exc:
-        print(f"⚠️  检测器初始化失败，切换为无检测模式: {exc}")
-        return None
+    # AerialDetectorAdapter 需配合旧版 aerial_tracking_system.py 使用，当前不可用。
+    # 标定请使用 --no-detector 手动模式，或恢复旧版依赖后重新启用。
+    print("检测器不可用（缺少 aerial_tracking_system 依赖），请使用 --no-detector 手动模式")
+    return None
 
 
 def detect_best_target(detector,
@@ -895,7 +919,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Boresight calibrator")
     parser.add_argument(
         "--config",
-        default=os.path.join(LASERTRACKING_DIR, "config_tracking.yaml"),
+        default=os.path.join(LASERTRACKING_DIR, "tracking_system_old", "config_tracking.yaml"),
         help="tracking 主配置路径",
     )
     parser.add_argument(

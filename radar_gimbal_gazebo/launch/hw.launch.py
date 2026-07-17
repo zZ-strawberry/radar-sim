@@ -26,7 +26,7 @@ def generate_launch_description():
 
     tracker_sim_params = (pkg_this_path / "config" / "lasertracking_sim_params.yaml").resolve()
     tracker_detect_params = (
-        pkg_this_path / "config" / "lasertracking_gimbal_detect_params.yaml"
+        pkg_this_path / "config" / "lasertracking_gimbal_detect_params_common.yaml"
     ).resolve()
     tracker_hw_params = (pkg_this_path / "config" / "lasertracking_hw_params.yaml").resolve()
 

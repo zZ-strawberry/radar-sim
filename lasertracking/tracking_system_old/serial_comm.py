@@ -1,45 +1,12 @@
-"""
-独立的串口通信模块
-- 自动检测串口可用性
-- 支持调试模式（无串口时打印数据）
-- 与主项目完全解耦
+"""串口通信模块，自动适配有/无串口模式。
 
-串口协议说明
-================
-【模式2：位置+速度前馈（新版，16字节）】
-数据格式：二进制，小端序
-- 四个float32打包，共16字节
-- 使用 struct.pack('<ffff', pitch, roll, v_pitch, v_roll)
+协议:
+  模式2 raw (16B LE): struct.pack('<ffff', pitch, roll, v_pitch, v_roll)
+  模式3 framed (23B LE): 0xCD + payload(20B) + CRC8 + 0xDC
+    payload = struct.pack('<ffffI', pitch, roll, v_pitch, v_roll, timestamp_ms)
+    CRC-8/ATM poly=0x07 init=0x00
 
-字节布局：
-- 字节0-3: pitch角度（度，float32）
-- 字节4-7: roll角度（度，float32）
-- 字节8-11: pitch角速度（度/秒，float32）
-- 字节12-15: roll角速度（度/秒，float32）
-
-角度定义：
-- pitch > 0: 云台向上仰
-- pitch < 0: 云台向下俯
-- roll > 0: 云台向左转
-- roll < 0: 云台向右转
-
-角速度定义（有符号矢量）：
-- v_pitch > 0: pitch角度正在增大（目标向上移动，需要云台向上转）
-- v_pitch < 0: pitch角度正在减小（目标向下移动，需要云台向下转）
-- v_roll > 0: roll角度正在增大（目标向左移动，需要云台向左转）
-- v_roll < 0: roll角度正在减小（目标向右移动，需要云台向右转）
-
-角度模式：绝对角度（相对于程序启动时的初始姿态）
-速度模式：瞬时角速度（卡尔曼滤波器估计的当前角速度）
-
-【模式3：分帧协议（推荐上赛场）】
-帧格式（23字节，小端序）：
-- byte0   : 帧头 0xCD
-- byte1-20: payload = struct.pack('<ffffI', pitch, roll, v_pitch, v_roll, timestamp_ms)
-- byte21  : CRC8(payload)（poly=0x07, init=0x00）
-- byte22  : 帧尾 0xDC
-
-回传姿态帧：下位机使用同样格式回传 pitch/roll/pitch_rate/roll_rate/timestamp。
+角度: pitch>0 上仰, roll>0 左转。绝对角，相对上电初始姿态。
 """
 import struct
 import time

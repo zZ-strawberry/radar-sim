@@ -1,29 +1,16 @@
-"""激光-相机视差距离评估工具（Python 版）
+"""激光-相机视差距离评估工具。
 
-用法::
+用法:
+    python .../parallax_estimator.py --config parallax.yaml
+    python .../parallax_estimator.py --config parallax.yaml --relative
+    python .../parallax_estimator.py --config parallax.yaml --csv outputs/parallax.csv
 
-    python lasertracking/calibration/parallax_estimator.py \\
-        --config lasertracking/calibration/parallax.yaml
-    python lasertracking/calibration/parallax_estimator.py \\
-        --config lasertracking/calibration/parallax.yaml --relative
-    python lasertracking/calibration/parallax_estimator.py \\
-        --config lasertracking/calibration/parallax.yaml --csv outputs/parallax.csv
+数学模型: du(Z)=fx*bx/Z, dv(Z)=fy*by/Z
+若设 z_ref，输出相对偏置 du_res(Z)=du(Z)-du(z_ref)。
 
-数学模型：
-
-    du(Z) = fx * bx / Z
-    dv(Z) = fy * by / Z
-
-bx/by 为激光出光点相对相机光心的基线（米），约定
-    bx > 0 表示激光在相机光心右侧
-    by > 0 表示激光在相机光心下方
-
-若设置了 z_ref，则输出相对偏置 du_res(Z) = du(Z) - du(z_ref)，
-即"在 z_ref 处做过 boresight 后，其它距离下残留的像素偏置"。
-
-模块同时作为库使用：``parallax_offset(fx, fy, bx, by, z, z_ref=None)``
-返回一个 ``(du, dv)``，供 boresight_calibrator 叠加 overlay。
+模块同时提供 parallax_offset() 供 boresight_calibrator 调用。
 """
+
 
 from __future__ import annotations
 

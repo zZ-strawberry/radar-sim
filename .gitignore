@@ -10,17 +10,21 @@ __pycache__/
 *.egg-info/
 *.egg
 
-# Model files (large binary files)
+# Model files 
 *.engine
 *.onnx
-# *.pt  # Uncomment if you want to exclude PyTorch models
 
-# Recordings / data
+# Recordings
 recordings/
+
+# Export (duplicate config)
+export/
 
 # IDE
 .vscode/
 .idea/
+.claude/
+.cursor/
 
 # OS
 .DS_Store
@@ -31,9 +35,13 @@ Thumbs.db
 *.swo
 *~
 
-# Temporary
+# Logs (outside log/)
+*.log
+
+# Generated diagnostics
+*_diagnostics.json
+
+# Temporary / manuals
 tmp_manuals/
 
-minor/dataset_shortcam_item/
-minor/dataset_telecam_item/
-minor/detect/
+minor/

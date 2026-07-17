@@ -1871,9 +1871,9 @@ if __name__ == "__main__":
     # 配置参数 ===========================
     # 单模型模式：不需要车辆模型
     VEHICLE_MODEL = _prefer_engine_path(
-        config.get('models', {}).get('aerial', config.get('models', {}).get('vehicle', 'lasertracking/aerial.pt'))
+        config.get('models', {}).get('aerial', config.get('models', {}).get('vehicle', 'lasertracking/model/aerial.pt'))
     )
-    ARMOR_MODEL = _prefer_engine_path(config.get('models', {}).get('armor', 'lasertracking/laser_new.pt'))
+    ARMOR_MODEL = _prefer_engine_path(config.get('models', {}).get('armor', 'lasertracking/model/laser_new.pt'))
     LASER_DATA_YAML = _resolve_path(config.get('models', {}).get('data_yaml', 'data2_laser.yaml'))
     AERIAL_CLASS_NAME = str(config.get('models', {}).get('aerial_class_name', 'item'))
 

@@ -1,0 +1,87 @@
+# =============================================================================
+# 激光跟踪 仿真专属参数（覆盖 common.yaml 中的同名键）
+# 来源: radar_gimbal.urdf.xacro 中的 Gazebo 相机模型几何数据
+#   - 短焦: 8mm 焦距 + 7.2mm 靶面 → HFOV=48.455° VFOV=28.396°
+#   - 长焦: 50mm 焦距 + 7.2mm 靶面 → HFOV=8.237° VFOV=4.639°
+#   - 图像: 1280×720
+#   - 基线: 两相机光轴平行(R=I), 光心距≈0.142m
+# =============================================================================
+lasertracking_tracker:
+  ros__parameters:
+    # ===== 短焦检测区域（覆盖 common 的 false）=====
+    wide_detect_right_half_only: false   # 仿真只检右半画面（无人机通常在右侧飞来）
+    wide_min_conf: 0.35                 # 短焦检测阈值（common默认0.002太低会产生半画面大误检框）
+
+    # ===== 视场参数（URDF 导出；2*atan(7.2/(2*focal_length))）=====
+    tele_hfov_deg: 8.237    # 2*atan(7.2/(2*50)) in deg
+    tele_vfov_deg: 4.639    # 2*atan(tan(8.237/2)*720/1280)
+    wide_hfov_deg: 48.455   # 2*atan(7.2/(2*8)) in deg
+    wide_vfov_deg: 28.396   # 2*atan(tan(48.455/2)*720/1280)
+
+    # ===== 激光校准（仿真中激光检测与相机光轴完全重合，无需补偿）=====
+    boresight_file: ""                       # 仿真无需 boresight 校准文件
+    pixel_offset_x: 0.0                      # 仿真光轴完美对齐
+    pixel_offset_y: 0.0
+    calibration_fx: 8891.0                   # = (1280/2) / tan(8.237°/2)，长焦仿真焦距(px)
+    calibration_fy: 8891.0                   # 方形像素，fy≈fx
+    baseline_bx: 0.0                         # 仿真无物理激光偏移
+    baseline_by: 0.0
+    baseline_z_ref: 0.0
+    parallax_enabled: false                  # 仿真基线为0，无需视差补偿
+    parallax_source: "fixed"
+    parallax_fixed_distance_m: 20.0
+    # parallax_target_width_m: 0.0
+    # parallax_target_height_m: 0.0
+    parallax_min_distance_m: 10.0
+    parallax_max_distance_m: 40.0
+    parallax_distance_alpha: 0.40
+    parallax_hold_last_distance: true
+    parallax_min_bbox_px: 8.0
+
+    # ===== 辅助重获 — 扫描参数 =====
+    enable_reacq_scan: true                  # 启用螺旋扫描（丢失长焦目标后主动搜索）
+    enable_reacq_wide_assist: false           # 启用短焦辅助重获
+    reacq_scan_fallback: true                # 短焦无目标时启用螺旋扫描兜底（防止状态机卡死）
+    reacq_use_wide_detection: false           # 重获期间使用短焦检测结果引导云台（覆盖common的false）
+    # 螺旋形状（公共默认值，与 common 一致但显式写出以便独立调整）
+    reacq_scan_spiral_spacing_deg: 11.4592
+    reacq_scan_spiral_spacing_start_deg: 3.0
+    reacq_scan_spiral_inner_turns: 2.0
+    reacq_scan_spiral_speed_deg_s: 7.4485
+    reacq_scan_spiral_r_max_deg: 12.6051
+    reacq_scan_spiral_yaw_scale: 1.0
+    reacq_scan_spiral_pitch_scale: 1.5
+    reacq_scan_spiral_theta_max_deg: 1439.84
+    # 扫描预设原点：仿真中两相机零位平行，以零位为圆心即可
+    reacq_scan_preset_yaw_deg: 0.0
+    reacq_scan_preset_pitch_deg: 0.0
+    reacq_scan_use_preset_without_anchor: true
+    reacq_scan_use_preset_after_lost_seconds: 3.0  # 丢失3秒后切回预设原点(0,0)重新扫描
+    reacq_scan_use_preset_after_total_lost_frames: 0
+
+    # ===== 短焦→长焦外参映射（仿真中两相机光轴完全平行 R=I）=====
+    reacq_wide_map_m00: 1.0
+    reacq_wide_map_m01: 0.0
+    reacq_wide_map_m10: 0.0
+    reacq_wide_map_m11: 1.0
+    # 参考零位角: 仅补偿 0.142m 基线视差（目标≈20m 时）
+    #   yaw = atan2(Δy_optical, distance) ≈ atan2(0.113, 20) ≈ 0.324°
+    #   pitch = atan2(-Δz_optical, distance) ≈ atan2(-0.086, 20) ≈ -0.246°
+    reacq_wide_ref_yaw_rad: 0.00565     # ≈ 0.324°
+    reacq_wide_ref_pitch_rad: -0.00430  # ≈ -0.246°
+
+    # ===== 长焦检测阈值 =====
+    tele_min_conf: 0.25             # 覆盖 common 的 0.60，仿真图像质量下降低阈值
+    tele_direct_conf_gate: 0.35     # 覆盖 common 的 0.70，降低全图直检门槛
+
+    # ===== 性能优化：降低推理负载减少延迟 =====
+    tele_infer_imgsz: 320      # 长焦从640降到320，推理快4倍
+    wide_infer_imgsz: 640      # 短焦用640（320太小，无人机仅9px无法检测）
+    tele_detect_hz: 10.0       # 长焦检测频率从25降到10
+    wide_detect_hz: 10.0       # 短焦检测频率
+    wide_detect_hz_idle: 5.0   # 空闲时更低
+    wide_detect_hz_reacq: 10.0 # 重获时恢复10Hz
+    loop_hz: 20.0              # 控制循环频率（需要和sim_params里的loop_hz一致）
+
+    # ===== 调试图（短焦全链路关闭，不发布短焦调试图）=====
+    enable_wide_debug_image_publish: false  # 覆盖 common 的 true，关闭短焦调试图

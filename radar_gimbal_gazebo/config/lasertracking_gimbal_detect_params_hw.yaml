@@ -1,7 +1,7 @@
 lasertracking_tracker:
   ros__parameters:
     # ===== 公共基线（长/短焦未单独写 model 时使用）=====
-    model_path: "lasertracking/model/laser_new.pt"  # 基线 .pt 权重路径（激光模块）
+    model_path: "lasertracking/model/best_new.pt"  # 基线 .pt 权重路径（激光模块）
     use_tensorrt: false  # 是否优先 TensorRT（.engine）
     trt_engine_path: "lasertracking/model/laser_new.engine"  # 基线 engine；长/短焦 trt 留空时回退到此
 
@@ -12,19 +12,21 @@ lasertracking_tracker:
     tele_aerial_trt_engine_path: "lasertracking/model/best_new.engine"  # 长焦无人机检测engine
     tele_aerial_min_conf: 0.10
     tele_infer_device: "cuda:0"  # 长焦推理设备
+    tele_aerial_infer_device: "cuda:0"  # 长焦无人机推理设备
+    tele_aerial_infer_half: false  # CPU 不支持 FP16
     tele_infer_imgsz: 640  # 长焦推理尺寸（需与长焦 engine 固定输入一致）
-    tele_infer_half: true  # 长焦 FP16
+    tele_infer_half: false  # 长焦 FP16
     tele_min_conf: 0.60  # 长焦置信度阈值
     tele_direct_conf_gate: 0.70  # 长焦全图直检>=该值则直接采用；低于该值走无人机ROI回退
     tele_detect_hz: 25.0  # 与控制环一致，减少「检测比控制快」带来的阶跃感
     loop_hz: 25.0
 
     # ===== 短焦推理（可与长焦不同尺寸/不同 engine；整链开关见 hw/sim 中 enable_short_focal_pipeline）=====
-    wide_model_path: "lasertracking/model/aerial.pt"  # 短焦专用 .pt（无人机）
+    wide_model_path: "lasertracking/model/best_new.pt"  # 短焦专用 .pt（无人机）
     wide_trt_engine_path: "lasertracking/model/best_new.engine"  # 短焦专用engine
     wide_infer_device: "cuda:0"  # 短焦推理设备
     wide_infer_imgsz: 640  # 短焦推理尺寸（若用独立 engine 须与此一致）
-    wide_infer_half: true  # 短焦 FP16
+    wide_infer_half: false  # 短焦 FP16
     wide_min_conf: 0.002  # 短焦置信度阈值（实机光照差时可略降）
     wide_detect_right_half_only: false  # hw_params 可覆盖；false=全画面检无人机
     wide_detect_hz: 25.0  # 短焦检测线程频率(Hz)
@@ -106,7 +108,7 @@ lasertracking_tracker:
     reacq_confirm_frames: 2  # 长焦重新连续检测多少帧后退出重获
     reacq_use_wide_detection: false # 重获期间优先用短焦检测引导云台
     reacq_max_step_rad: 0.03  # 重获期间单周期最大角步长(弧度)
-    reacq_scan_fallback: true  # 无短焦目标时启用扫描兜底s
+    reacq_scan_fallback: true  # 无短焦目标时启用扫描兜底
     reacq_scan_spiral_spacing_deg: 11.4592  # 外圈起：每圈半径增量(度)，与旧版 0.20 rad 等价
     reacq_scan_spiral_spacing_start_deg: 3.0  # 前几整圈内每圈半径增量(度)，宜明显小于上一行以压实中心
     reacq_scan_spiral_inner_turns: 2.0  # 使用上一行步进的整圈数(每圈 2π)；0=全程只用外圈步进

@@ -1,0 +1,98 @@
+# =============================================================================
+# 激光跟踪 检测/控制 公共参数（仿真 & 实机 共用）
+# 仿真加载顺序: sim_params.yaml → common.yaml → sim.yaml
+# 实机加载顺序: sim_params.yaml → common.yaml → hw_params.yaml
+# =============================================================================
+lasertracking_tracker:
+  ros__parameters:
+    # ===== 公共基线（长/短焦未单独写 model 时使用）=====
+    model_path: "lasertracking/model/best_new.pt"  # 基线 .pt 权重路径（激光模块）
+    use_tensorrt: false  # 是否优先 TensorRT（.engine）
+    trt_engine_path: "lasertracking/model/laser_new.engine"  # 基线 engine；长/短焦 trt 留空时回退到此
+
+    # ===== 长焦推理（跟踪主链路）=====
+    tele_model_path: ""  # 长焦激光模块模型
+    tele_trt_engine_path: ""  # 长焦激光模块engine
+    tele_aerial_model_path: ""  # 长焦无人机检测模型（用于ROI约束）
+    tele_aerial_trt_engine_path: ""  # 长焦无人机检测engine
+    tele_aerial_min_conf: 0.10
+    tele_infer_device: "cuda:0"  # 长焦推理设备（hw_params 可覆盖为 cuda:0）
+    tele_aerial_infer_device: "cuda:0"  # 长焦无人机推理设备（hw_params 可覆盖）
+    tele_aerial_infer_half: true  # GPU FP16 加速
+    tele_infer_imgsz: 640  # 长焦推理尺寸（需与长焦 engine 固定输入一致）
+    tele_infer_half: true  # 长焦 FP16
+    tele_min_conf: 0.60  # 长焦置信度阈值
+    tele_direct_conf_gate: 0.70  # 长焦全图直检>=该值则直接采用；低于该值走无人机ROI回退
+    tele_detect_hz: 25.0  # 与控制环一致，减少「检测比控制快」带来的阶跃感
+    loop_hz: 25.0
+
+    # ===== 短焦推理（可与长焦不同尺寸/不同 engine；整链开关见 sim/hw 中 enable_short_focal_pipeline）=====
+    wide_model_path: ""  # 短焦专用 .pt（无人机）
+    wide_trt_engine_path: ""  # 短焦专用engine
+    wide_infer_device: "cuda:0"  # 短焦推理设备（hw_params 可覆盖为 cuda:0）
+    wide_infer_imgsz: 640  # 短焦推理尺寸（若用独立 engine 须与此一致）
+    wide_infer_half: true  # 短焦 FP16
+    wide_min_conf: 0.002  # 短焦置信度阈值（实机光照差时可略降）
+    wide_detect_right_half_only: false  # hw_params/sim_params 可覆盖；false=全画面检无人机
+    wide_detect_hz: 25.0  # 短焦检测线程频率(Hz)
+    wide_detect_hz_idle: 25.0  # 正常跟踪时短焦低频待机(Hz)
+    wide_detect_hz_reacq: 25.0  # 重获期间短焦高频推理(Hz), <=0 时回退到 wide_detect_hz
+
+    # ===== 图像预处理（默认关闭：原图推理；仿真/实机明暗请调 hik_*.yaml 或打开下列开关）=====
+    enable_dynamic_tele_exposure: false
+    tele_exposure_search_gain: 1.0
+    tele_exposure_track_gain: 1.0
+    tele_exposure_search_offset: 0.0
+    tele_exposure_track_offset: 0.0
+    tele_exposure_lock_frames: 3
+    tele_exposure_lost_frames: 6
+    tele_exposure_min_switch_interval_s: 0.6
+    wide_exposure_gain: 1.0
+    wide_exposure_offset: 0.0
+
+    # ===== 云台控制参数（静止/慢速稳心：小 kp、略大静区、限制单步角增量）=====
+    kp_yaw: 0.27
+    kp_pitch: 0.27
+    command_smooth_yaw: 0.50
+    command_smooth_pitch: 0.48
+    deadzone_yaw_deg: 0.11
+    deadzone_pitch_deg: 0.11
+    pitch_deadzone_exit_ratio: 1.28
+    max_step_rad: 0.026
+    yaw_limit_rad: 3.0  # 偏航角绝对限位(弧度)
+    yaw_left_limit_rad: 0.35  # 左转限位(弧度, yaw>0 为左转)
+    pitch_limit_rad: 1.1  # 俯仰角绝对限位(弧度)
+    yaw_error_sign: -1.0  # 偏航误差方向符号(用于方向校正)
+    pitch_error_sign: 1.0  # 俯仰误差方向符号(用于方向校正)
+
+    # ===== 速度前馈与预测滤波 =====
+    enable_velocity_feedforward: false
+    velocity_decay_multiple: 5.0
+    enable_kalman_filter: false
+    kalman_prediction_time_ms: 0.01
+    kalman_process_noise: 0.01
+    kalman_measurement_noise: 0.85
+    kalman_max_rate_pitch_deg_s: 0.1
+    kalman_max_rate_roll_deg_s: 0.1
+
+    # ===== 辅助重获 — 状态机开关与帧计数（扫描形状/圆心/外参等见 sim/hw 各自文件）=====
+    enable_reacq_assist: true  # 总开关：丢失长焦目标后，启用辅助重获状态机
+    enable_reacq_scan: true  # 扫描重获功能开关（sim/hw 各自覆盖）
+    enable_reacq_wide_assist: false  # 短焦辅助重获功能开关（sim/hw 各自覆盖）
+    reacq_require_first_lock: false  # 启动后需先锁定过一次长焦目标，才允许进入重获流程
+    reacq_enter_lost_frames: 6  # 与曝光回切阈值对齐，避免过早进入重获
+    reacq_wide_enter_lost_frames: 6  # 与 reacq_enter_lost_frames 保持一致
+    reacq_confirm_frames: 2  # 长焦重新连续检测多少帧后退出重获
+    reacq_use_wide_detection: false  # 重获期间优先用短焦检测引导云台
+    reacq_max_step_rad: 0.03  # 重获期间单周期最大角步长(弧度)
+    reacq_wide_lost_tolerance_frames: 30  # 短焦短时丢帧保持次数，避免频繁回落到扫描
+    reacq_scan_to_wide_frames: 20  # 扫描多少帧仍未重获则立即切入短焦辅助
+    reacq_wide_phase_frames: 18  # 短焦辅助连续尝试帧数，超时后回到扫描再重试
+
+    # ===== 调试图话题（总开关 + 分路；任一路 true 且总开关 true 才发布对应 Image）=====
+    enable_debug_image_publish: true
+    enable_tele_debug_image_publish: true  # /lasertracking/debug_image 长焦
+    enable_wide_debug_image_publish: true  # /lasertracking/wide_debug_image 短焦
+    # 长/短焦调试图限宽(px)；0=原图。960~1280 可明显提高 debug 话题帧率（检测仍用原图）
+    tele_debug_image_max_width: 640
+    wide_debug_image_max_width: 960

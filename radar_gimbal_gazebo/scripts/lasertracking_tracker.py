@@ -265,7 +265,7 @@ class LaserTrackingTracker(Node):
         self.declare_parameter("trt_engine_path", "")
         self.declare_parameter("tele_model_path", "")
         self.declare_parameter("tele_trt_engine_path", "")
-        self.declare_parameter("tele_aerial_model_path", "lasertracking/aerial.pt")
+        self.declare_parameter("tele_aerial_model_path", "lasertracking/model/aerial.pt")
         self.declare_parameter("tele_aerial_trt_engine_path", "")
         self.declare_parameter("tele_aerial_min_conf", 0.10)
         self.declare_parameter("tele_aerial_infer_device", "cuda:0")
@@ -1016,6 +1016,7 @@ class LaserTrackingTracker(Node):
         dp = self._clamp(pitch_target - self._pitch, -max_step, max_step)
         self._yaw += dy
         self._pitch += dp
+
         self._publish_current_pose_command()
 
     def _map_wide_error_to_tele_error(self, yaw_err: float, pitch_err: float) -> tuple[float, float]:
@@ -1113,11 +1114,13 @@ class LaserTrackingTracker(Node):
             werr_y = (wide_det.cy - 0.5 * wh) / max(1.0, 0.5 * wh)
             yaw_sign = float(self.get_parameter("yaw_error_sign").value)
             pitch_sign = float(self.get_parameter("pitch_error_sign").value)
-            yaw_err = yaw_sign * werr_x * (self._wide_hfov * 0.5)
-            pitch_err = pitch_sign * (-werr_y) * (self._wide_vfov * 0.5)
+            # 针孔相机精确公式: θ = atan(norm_offset * tan(hfov/2))
+            yaw_err = yaw_sign * math.atan(werr_x * math.tan(self._wide_hfov * 0.5))
+            pitch_err = pitch_sign * math.atan((-werr_y) * math.tan(self._wide_vfov * 0.5))
             yaw_err, pitch_err = self._map_wide_error_to_tele_error(yaw_err, pitch_err)
             self._reacq_last_wide_err = (yaw_err, pitch_err)
             self._reacq_wide_miss_count = 0
+
             self._run_reacq_wide_assist(yaw_err, pitch_err)
             if self._reacq_wide_frames >= self._reacq_wide_phase_frames:
                 self._reacq_phase = "scan"
@@ -1157,7 +1160,7 @@ class LaserTrackingTracker(Node):
         # 原样（绝对路径或当前目录相对路径）
         candidates.append(Path(raw))
 
-        # 常见误写: /lasertracking/aerial.pt（本意是仓库内相对路径）
+        # 常见误写: /lasertracking/model/aerial.pt（本意是仓库内相对路径）
         if raw.startswith("/lasertracking/"):
             candidates.append(Path.cwd() / raw.lstrip("/"))
 
@@ -1790,7 +1793,7 @@ class LaserTrackingTracker(Node):
         return cv2.convertScaleAbs(frame, alpha=g, beta=b)
 
     def _resolve_lasertracking_dir(self) -> Path:
-        """install 后 __file__ 在 install/.../lib/.../lasertracking_tracker，不能再用 parents[2] 当仓库根。"""
+        """返回 lasertracking 目录路径。优先通过 serial_comm.py 定位。"""
         candidates: list[Path] = []
         try:
             from ament_index_python.packages import get_package_share_directory
@@ -1798,7 +1801,10 @@ class LaserTrackingTracker(Node):
             share = Path(get_package_share_directory("radar_gimbal_gazebo")).resolve()
             for base in [share, *share.parents]:
                 cand = base / "lasertracking"
-                if cand.is_dir() and (cand / "serial_comm.py").is_file():
+                if cand.is_dir() and (
+                    (cand / "serial_comm.py").is_file()
+                    or (cand / "tracking_system_old" / "serial_comm.py").is_file()
+                ):
                     candidates.append(cand)
                     break
         except Exception:
@@ -1808,7 +1814,10 @@ class LaserTrackingTracker(Node):
             if len(script.parents) > depth:
                 candidates.append(script.parents[depth] / "lasertracking")
         for c in candidates:
-            if c.is_dir() and (c / "serial_comm.py").is_file():
+            if c.is_dir() and (
+                (c / "serial_comm.py").is_file()
+                or (c / "tracking_system_old" / "serial_comm.py").is_file()
+            ):
                 return c
         return candidates[0] if candidates else Path.cwd() / "lasertracking"
 
@@ -1817,6 +1826,10 @@ class LaserTrackingTracker(Node):
             lasertracking_dir = self._resolve_lasertracking_dir()
             if str(lasertracking_dir) not in sys.path:
                 sys.path.insert(0, str(lasertracking_dir))
+            # serial_comm.py 在 tracking_system_old/ 子目录时也加入搜索路径
+            old_dir = lasertracking_dir / "tracking_system_old"
+            if old_dir.is_dir() and str(old_dir) not in sys.path:
+                sys.path.insert(0, str(old_dir))
             from serial_comm import create_serial  # type: ignore
 
             link = str(self.get_parameter("hw_comm_link").value).strip().lower()
@@ -2450,6 +2463,8 @@ class LaserTrackingTracker(Node):
         self._yaw = self._clamp(self._yaw, yaw_min, yaw_max)
         self._pitch = self._clamp(self._pitch, -pitch_lim, pitch_lim)
 
+
+
         v_pitch = 0.0
         v_roll = 0.0
         if self._enable_velocity_ff and self._enable_kalman:
@@ -2590,8 +2605,9 @@ class LaserTrackingTracker(Node):
             err_y = (tele_det.cy - target_y) / max(1.0, 0.5 * hts)
             yaw_sign = float(self.get_parameter("yaw_error_sign").value)
             pitch_sign = float(self.get_parameter("pitch_error_sign").value)
-            yaw_err = yaw_sign * err_x * (self._tele_hfov * 0.5)
-            pitch_err = pitch_sign * (-err_y) * (self._tele_vfov * 0.5)
+            # 针孔相机精确公式: θ = atan(norm_offset * tan(hfov/2))
+            yaw_err = yaw_sign * math.atan(err_x * math.tan(self._tele_hfov * 0.5))
+            pitch_err = pitch_sign * math.atan((-err_y) * math.tan(self._tele_vfov * 0.5))
             max_step = max(0.001, float(self.get_parameter("max_step_rad").value))
             self._send_gimbal_control(yaw_err, pitch_err, max_step)
             if self._reacq_active:

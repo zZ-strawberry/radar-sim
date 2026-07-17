@@ -1,6 +1,7 @@
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, OpaqueFunction, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
@@ -43,14 +44,14 @@ _GZ_SCRIPT_URI = "file://media/materials/scripts/gazebo.material"
 
 def _drone_urdf_path_for_gazebo(repo_root: Path, trim_stack_base_z: str) -> str:
     """xacro 展开 + package://drone/meshes → file://…/aerial.SLDASM/meshes，供 gz sdf / Gazebo 解析。"""
-    xacro_path = repo_root / "aerial.SLDASM" / "urdf" / "drone.urdf.xacro"
+    xacro_path = repo_root / "minor" / "aerial.SLDASM" / "urdf" / "drone.urdf.xacro"
     text = xacro.process_file(
         str(xacro_path),
         mappings={"trim_stack_base_z": trim_stack_base_z.strip()},
     ).toxml()
     text = re.sub(r'^\s*<\?xml[^>]*\?>\s*', "", text, count=1)
     text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
-    meshes = (repo_root / "aerial.SLDASM" / "meshes").resolve()
+    meshes = (repo_root / "minor" / "aerial.SLDASM" / "meshes").resolve()
     text = text.replace("package://drone/meshes/", "file://" + str(meshes) + "/")
     fd, tmp = tempfile.mkstemp(prefix="drone_gazebo_", suffix=".urdf")
     os.close(fd)
@@ -159,9 +160,24 @@ def generate_launch_description():
     motion_h_pause_min = float(motion_cfg.get("height_pause_min_s", 0.15))
     motion_h_pause_max = float(motion_cfg.get("height_pause_max_s", 0.6))
 
+    # ---- CLI 可覆盖参数（默认值取 YAML） ----
+    enable_lasertracking_arg = DeclareLaunchArgument(
+        "enable_lasertracking",
+        default_value=str(enable_lasertracking).lower(),
+        description="Enable lasertracking nodes (overrides YAML)",
+    )
+    drone_motion_arg = DeclareLaunchArgument(
+        "drone_random_motion",
+        default_value=str(motion_enabled).lower(),
+        description="Enable drone random motion (overrides YAML)",
+    )
+
     lasertracking_sim_params_file = (pkg_this_path / "config" / "lasertracking_sim_params.yaml").resolve()
-    lasertracking_gimbal_detect_params_file = (
-        pkg_this_path / "config" / "lasertracking_gimbal_detect_params.yaml"
+    lasertracking_gimbal_detect_common_file = (
+        pkg_this_path / "config" / "lasertracking_gimbal_detect_params_common.yaml"
+    ).resolve()
+    lasertracking_gimbal_detect_sim_file = (
+        pkg_this_path / "config" / "lasertracking_gimbal_detect_params_sim.yaml"
     ).resolve()
 
     world = os.path.join(pkg_this, "worlds", "empty.world")
@@ -240,7 +256,9 @@ def generate_launch_description():
     spawn_aerial = OpaqueFunction(function=_spawn_drone)
 
     def _drone_motion_group(context, *args, **kwargs):
-        if not motion_enabled:
+        # CLI 参数优先，未传则回退 YAML
+        motion_enabled_str = LaunchConfiguration("drone_random_motion").perform(context)
+        if motion_enabled_str.lower() not in ("true", "1"):
             return []
         return [
             TimerAction(
@@ -331,15 +349,22 @@ def generate_launch_description():
     )
 
     def _lasertracking_group(context, *args, **kwargs):
-        if not enable_lasertracking:
+        # CLI 参数优先，未传则回退 YAML
+        enable_lt_str = LaunchConfiguration("enable_lasertracking").perform(context)
+        if enable_lt_str.lower() not in ("true", "1"):
             return []
         sim_params_file = Path(lasertracking_sim_params_file).expanduser()
-        gimbal_detect_params_file = Path(lasertracking_gimbal_detect_params_file).expanduser()
+        common_file = Path(lasertracking_gimbal_detect_common_file).expanduser()
+        sim_override_file = Path(lasertracking_gimbal_detect_sim_file).expanduser()
         if not sim_params_file.is_file():
             raise RuntimeError(f"未找到 lasertracking_sim_params_file: {sim_params_file}")
-        if not gimbal_detect_params_file.is_file():
+        if not common_file.is_file():
             raise RuntimeError(
-                f"未找到 lasertracking_gimbal_detect_params_file: {gimbal_detect_params_file}"
+                f"未找到 lasertracking_gimbal_detect_params_common_file: {common_file}"
+            )
+        if not sim_override_file.is_file():
+            raise RuntimeError(
+                f"未找到 lasertracking_gimbal_detect_params_sim_file: {sim_override_file}"
             )
         return [
             TimerAction(
@@ -357,7 +382,8 @@ def generate_launch_description():
                         output="screen",
                         parameters=[
                             str(sim_params_file),
-                            str(gimbal_detect_params_file),
+                            str(common_file),
+                            str(sim_override_file),
                         ],
                         additional_env=_ros_python_nodes_env(),
                     ),
@@ -369,6 +395,8 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            enable_lasertracking_arg,
+            drone_motion_arg,
             gazebo,
             robot_state_publisher,
             spawn_entity,
