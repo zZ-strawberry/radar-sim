@@ -43,15 +43,15 @@ _GZ_SCRIPT_URI = "file://media/materials/scripts/gazebo.material"
 
 
 def _drone_urdf_path_for_gazebo(repo_root: Path, trim_stack_base_z: str) -> str:
-    """xacro 展开 + package://drone/meshes → file://…/aerial.SLDASM/meshes，供 gz sdf / Gazebo 解析。"""
-    xacro_path = repo_root / "minor" / "aerial.SLDASM" / "urdf" / "drone.urdf.xacro"
+    """xacro 展开 + package://drone/meshes → file://…/aerial.sldasm/meshes，供 gz sdf / Gazebo 解析。"""
+    xacro_path = repo_root / "aerial.sldasm" / "urdf" / "drone.urdf.xacro"
     text = xacro.process_file(
         str(xacro_path),
         mappings={"trim_stack_base_z": trim_stack_base_z.strip()},
     ).toxml()
     text = re.sub(r'^\s*<\?xml[^>]*\?>\s*', "", text, count=1)
     text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
-    meshes = (repo_root / "minor" / "aerial.SLDASM" / "meshes").resolve()
+    meshes = (repo_root / "aerial.sldasm" / "meshes").resolve()
     text = text.replace("package://drone/meshes/", "file://" + str(meshes) + "/")
     fd, tmp = tempfile.mkstemp(prefix="drone_gazebo_", suffix=".urdf")
     os.close(fd)

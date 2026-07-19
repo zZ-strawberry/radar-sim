@@ -55,8 +55,7 @@ lasertracking_tracker:
     tele_aerial_infer_device: "cuda:0"
     wide_infer_device: "cuda:0"
  
-    # ===== 3) 实机相机内参（来自 minor/*.json，1440x1080 长焦 / 3072x2048 短焦）=====
-    # 源: minor/long50mm_camera_intrinsics.json, minor/short_camera_intrinsics.json
+    # ===== 3) 实机相机内参（1440x1080 长焦 / 3072x2048 短焦）=====
     # FOV 由 fx,fy 与图像宽高计算: hfov=2*atan(W/2/fx), vfov=2*atan(H/2/fy)
     tele_hfov_deg: 5.3495
     tele_vfov_deg: 4.0101
@@ -85,7 +84,7 @@ lasertracking_tracker:
     parallax_min_bbox_px: 8.0
 
     # ===== 5) 双相机相对外参 =====
-    # R 左上 2x2 仍来自 minor/stereo_short_to_long_extrinsics.json
+    # R 左上 2x2（短焦→长焦外参）
     # 参考角：以「相对初始位姿的最终指令」为准（实测）；下位机反馈仅作记录
     #   指令 pitch=-0.806449° yaw/roll=5.179403° | 反馈 pitch=0.267916° yaw/roll=5.185379°
     # 立体平移 T_m（仅记录）: -0.047978, 0.039256, -0.002525

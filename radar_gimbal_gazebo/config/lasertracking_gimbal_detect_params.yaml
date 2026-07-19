@@ -31,7 +31,7 @@ lasertracking_tracker:
     wide_detect_hz_idle: 25.0  # 正常跟踪时短焦低频待机(Hz)
     wide_detect_hz_reacq: 25.0  # 重获期间短焦高频推理(Hz), <=0 时回退到 wide_detect_hz
 
-    # ===== 视场参数（与 minor/*_intrinsics.json 一致；hw_params 可覆盖）=====
+    # ===== 视场参数（hw_params 可覆盖）=====
     tele_hfov_deg: 5.3495
     tele_vfov_deg: 4.0101
     wide_hfov_deg: 35.0177
@@ -42,7 +42,7 @@ lasertracking_tracker:
     boresight_file: "lasertracking/calibration/boresight.yaml"
     pixel_offset_x: -96.75  # 回退固定补偿(dx, px)
     pixel_offset_y: -85.50  # 回退固定补偿(dy, px)
-    calibration_fx: 15412.022117618495  # 长焦 fx(px)，minor/long50mm_camera_intrinsics.json
+    calibration_fx: 15412.022117618495  # 长焦 fx(px)
     calibration_fy: 15424.62801200107  # 长焦 fy(px)
     baseline_bx: 0.02  # 激光相对相机水平基线(m)
     baseline_by: 0.0  # 激光相对相机垂直基线(m)；须为浮点，勿写 0（会被当成整型）
@@ -126,7 +126,7 @@ lasertracking_tracker:
     reacq_wide_lost_tolerance_frames: 30  # 短焦短时丢帧保持次数，避免频繁回落到扫描
     reacq_scan_to_wide_frames: 20  # 扫描多少帧仍未重获则立即切入短焦辅助
     reacq_wide_phase_frames: 18  # 短焦辅助连续尝试帧数，超时后回到扫描再重试
-    # 短焦→长焦外参 R 左上 2x2 + 光轴偏差角（minor/stereo_short_to_long_extrinsics.json）
+    # 短焦→长焦外参 R 左上 2x2 + 光轴偏差角
     reacq_wide_map_m00: 0.9992495136274293
     reacq_wide_map_m01: 0.014371906748208027
     reacq_wide_map_m10: -0.014711585823869012

@@ -79,6 +79,8 @@ ls -la /dev/radar_USB*   # 验证 → /dev/radar_USB0、/dev/radar_USB1
 
 ```
 radar-sim/
+├── aerial.sldasm/              # 无人机 URDF 模型
+├── data/                       # 演示素材
 ├── radar_gimbal_gazebo/        # ROS2 功能包
 │   ├── launch/                 # sim.launch.py / hw.launch.py / hw_sdk.launch.py
 │   ├── scripts/                # lasertracking_tracker.py / gimbal_terminal_control.py 等
@@ -89,8 +91,7 @@ radar-sim/
 │   └── udev/                   # 串口 udev 规则
 ├── lasertracking/
 │   ├── calibration/            # boresight_calibrator.py / parallax_estimator.py
-│   ├── model/                  # YOLO 模型 (.pt/.onnx/.engine)
-(：best_new 为仿真无人机模型，laser_new 为真实激光检测模块模型)
+│   ├── model/                  # YOLO 模型 (：best_new 为仿真无人机模型，laser_new 为真实激光检测模块模型)
 │   └── tracking_system_old/    # 旧版独立跟踪系统
 ├── MvImport_Linux/             # 海康 SDK Python 封装
 └── README.md
